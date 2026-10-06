@@ -4,7 +4,6 @@ import { SetLang } from "@/components/set-lang";
 import { isLang, tx, type Lang } from "@/lib/i18n";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { Suspense } from "react";
 
 export function generateStaticParams() {
   return [{ lang: "en" }, { lang: "zh" }];
@@ -45,9 +44,7 @@ export default async function LangLayout({
   return (
     <div className="flex min-h-full flex-col">
       <SetLang lang={lang} />
-      <Suspense fallback={<div className="h-[100px] bg-ink" />}>
-        <SiteHeader lang={lang} />
-      </Suspense>
+      <SiteHeader lang={lang} />
       <main className="flex-1">{children}</main>
       <SiteFooter lang={lang} />
     </div>

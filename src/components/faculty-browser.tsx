@@ -8,13 +8,13 @@ import { useMemo, useState } from "react";
 type Filter = "all" | "full" | "part";
 
 function initials(name: string) {
-  return name
-    .split(" ")
-    .filter((part) => part.length > 1 && part !== "T.S.")
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join("")
-    .toUpperCase();
+  const parts = name
+    .replace(/\./g, "")
+    .split(/\s+/)
+    .filter((part) => part.length > 1);
+  const first = parts[0]?.[0] ?? "";
+  const last = parts.length > 1 ? parts[parts.length - 1][0] : "";
+  return `${first}${last}`.toUpperCase();
 }
 
 export function FacultyBrowser({ lang }: { lang: Lang }) {

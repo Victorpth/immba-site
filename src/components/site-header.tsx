@@ -12,21 +12,31 @@ import {
 import { otherLang, tx, withLang, type Lang } from "@/lib/i18n";
 import { Menu, Search } from "lucide-react";
 import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { FormEvent, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { FormEvent, useEffect, useState } from "react";
 
 export function SiteHeader({ lang }: { lang: Lang }) {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState(searchParams.get("q") ?? "");
+  const [query, setQuery] = useState("");
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    setQuery(params.get("q") ?? "");
+  }, [pathname]);
 
   function switchedPath(next: Lang) {
     const parts = pathname.split("/");
     if (parts[1] === "en" || parts[1] === "zh") parts[1] = next;
-    const qs = searchParams.toString();
-    return `${parts.join("/") || `/${next}`}${qs ? `?${qs}` : ""}`;
+    return parts.join("/") || `/${next}`;
+  }
+
+  function onSwitchLanguage(event: { preventDefault: () => void }, next: Lang) {
+    const search = window.location.search;
+    if (!search) return;
+    event.preventDefault();
+    router.push(`${switchedPath(next)}${search}`);
   }
 
   function onSearch(event: FormEvent) {
@@ -112,6 +122,7 @@ export function SiteHeader({ lang }: { lang: Lang }) {
           <Link
             href={switchedPath(otherLang(lang))}
             hrefLang={otherLang(lang) === "zh" ? "zh-Hant" : "en"}
+            onClick={(event) => onSwitchLanguage(event, otherLang(lang))}
             className="hidden rounded-full border border-white/20 px-3 py-1.5 text-xs font-semibold tracking-wide text-cream hover:bg-white/10 sm:inline-flex"
           >
             {lang === "en" ? "中文" : "EN"}
@@ -179,7 +190,10 @@ export function SiteHeader({ lang }: { lang: Lang }) {
                 <div className="flex gap-2">
                   <Link
                     href={switchedPath(otherLang(lang))}
-                    onClick={() => setOpen(false)}
+                    onClick={(event) => {
+                      onSwitchLanguage(event, otherLang(lang));
+                      setOpen(false);
+                    }}
                     className="inline-flex h-10 flex-1 items-center justify-center rounded-lg border border-border text-sm"
                   >
                     {lang === "en" ? "中文" : "English"}
