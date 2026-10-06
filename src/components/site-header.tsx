@@ -9,8 +9,9 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { LogoMark } from "@/components/logo-mark";
 import { otherLang, tx, withLang, type Lang } from "@/lib/i18n";
-import { Menu, Search } from "lucide-react";
+import { ExternalLink, Menu, Search } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
@@ -47,22 +48,40 @@ export function SiteHeader({ lang }: { lang: Lang }) {
   }
 
   const apply = withLang(lang, "/admissions");
+  const official = {
+    en: "https://www.management.fju.edu.tw/esubweb/immbaengindex/",
+    zh: "https://www.management.fju.edu.tw/subweb/immba/",
+  }[lang];
 
   return (
-    <header className="sticky top-0 z-40 border-b border-white/10 bg-ink text-cream">
-      <div className="site-wrap flex h-9 items-center justify-between gap-4 text-[11px] tracking-[0.14em] text-cream/70 uppercase">
-        <p className="truncate">
-          {tx(lang, {
-            en: "Fu Jen Catholic University · College of Management",
-            zh: "輔仁大學 · 管理學院",
-          })}
-        </p>
-        <p className="hidden shrink-0 sm:block">AACSB Accredited</p>
+    <header className="sticky top-0 z-40">
+      <div className="bg-[#f6d4dc] text-[#6e243c]">
+        <div className="site-wrap flex h-10 items-center justify-between gap-3 text-xs sm:text-[13px]">
+          <p className="truncate">
+            {tx(lang, {
+              en: "Fu Jen Catholic University · College of Management",
+              zh: "輔仁大學 · 管理學院",
+            })}
+          </p>
+          <p className="hidden shrink-0 tracking-[0.14em] uppercase sm:block">AACSB</p>
+          <a
+            href={official}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex shrink-0 items-center gap-1 font-semibold underline decoration-[#6e243c]/35 underline-offset-4 hover:decoration-[#6e243c]"
+          >
+            {tx(lang, { en: "Official imMBA website", zh: "國際經管官方網站" })}
+            <ExternalLink className="size-3.5" aria-hidden="true" />
+          </a>
+        </div>
       </div>
-      <div className="border-t border-white/10">
+      <div className="border-b border-white/10 bg-ink text-cream">
         <div className="site-wrap flex h-16 items-center gap-4">
-          <Link href={withLang(lang, "/")} className="mr-auto flex items-baseline gap-3">
-            <span className="font-display text-2xl tracking-tight text-cream">imMBA</span>
+          <Link href={withLang(lang, "/")} className="mr-auto flex items-center gap-2.5">
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-white/15 bg-white/5">
+              <LogoMark className="size-7 text-cream" />
+            </span>
+            <span className="font-display text-2xl leading-none tracking-tight text-cream">imMBA</span>
             <span className="hidden text-xs leading-tight text-cream/70 lg:block">
               {tx(lang, {
                 en: "MBA in International Management",
@@ -145,7 +164,10 @@ export function SiteHeader({ lang }: { lang: Lang }) {
             </SheetTrigger>
             <SheetContent side="right" className="w-[min(100%,22rem)] bg-cream">
               <SheetHeader>
-                <SheetTitle className="font-display text-2xl">imMBA</SheetTitle>
+                <SheetTitle className="flex items-center gap-2 font-display text-2xl">
+                  <LogoMark className="size-7 text-ink" tone="light" />
+                  imMBA
+                </SheetTitle>
               </SheetHeader>
               <div className="flex flex-col gap-6 overflow-y-auto px-4 pb-8">
                 <form onSubmit={onSearch}>

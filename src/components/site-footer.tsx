@@ -1,3 +1,4 @@
+import { LogoMark } from "@/components/logo-mark";
 import { navGroups, utilityLinks } from "@/content/nav";
 import { tx, withLang, type Lang } from "@/lib/i18n";
 import Link from "next/link";
@@ -7,7 +8,12 @@ export function SiteFooter({ lang }: { lang: Lang }) {
     <footer className="mt-auto bg-ink text-cream">
       <div className="site-wrap grid gap-10 py-14 sm:grid-cols-2 lg:grid-cols-4">
         <div>
-          <p className="font-display text-3xl">imMBA</p>
+          <Link href={withLang(lang, "/")} className="flex items-center gap-3">
+            <span className="flex size-11 shrink-0 items-center justify-center rounded-lg border border-white/15 bg-white/5">
+              <LogoMark className="size-8 text-cream" />
+            </span>
+            <p className="font-display text-3xl leading-none">imMBA</p>
+          </Link>
           <p className="mt-3 max-w-xs text-sm leading-relaxed text-cream/70">
             {tx(lang, {
               en: "MBA in International Management, College of Management, Fu Jen Catholic University.",
