@@ -6,7 +6,7 @@ type LogoMarkProps = {
 export function LogoMark({ className }: LogoMarkProps) {
   return (
     <img
-      src="/immba-logo.png"
+      src="/fu-jen-program-logo.png"
       alt=""
       className={className}
     />
