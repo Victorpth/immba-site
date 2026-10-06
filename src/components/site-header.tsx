@@ -1,17 +1,10 @@
 "use client";
 
-import { navGroups, utilityLinks } from "@/content/nav";
+import { mainNav } from "@/content/nav";
 import { Button } from "@/components/ui/button";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
 import { LogoMark } from "@/components/logo-mark";
 import { otherLang, tx, withLang, type Lang } from "@/lib/i18n";
-import { ExternalLink, Menu, Search } from "lucide-react";
+import { ExternalLink, Search } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
@@ -19,7 +12,7 @@ import { FormEvent, useEffect, useState } from "react";
 export function SiteHeader({ lang }: { lang: Lang }) {
   const pathname = usePathname();
   const router = useRouter();
-  const [open, setOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(true);
   const [query, setQuery] = useState("");
 
   useEffect(() => {
@@ -44,7 +37,6 @@ export function SiteHeader({ lang }: { lang: Lang }) {
     event.preventDefault();
     const value = query.trim();
     router.push(withLang(lang, `/search${value ? `?q=${encodeURIComponent(value)}` : ""}`));
-    setOpen(false);
   }
 
   const apply = withLang(lang, "/admissions");
@@ -56,181 +48,112 @@ export function SiteHeader({ lang }: { lang: Lang }) {
   return (
     <header className="sticky top-0 z-40">
       <div className="bg-[#f6d4dc] text-[#6e243c]">
-        <div className="site-wrap flex h-10 items-center justify-between gap-3 text-xs sm:text-[13px]">
-          <p className="truncate">
+        <div className="site-wrap flex flex-wrap items-center justify-between gap-x-4 gap-y-2 py-2 text-xs sm:text-[13px]">
+          <p className="min-w-0 leading-relaxed">
             {tx(lang, {
-              en: "Fu Jen Catholic University · College of Management",
-              zh: "輔仁大學 · 管理學院",
+              en: "Course teaching demonstration site by Professor Yi-Ning Tu (not the official website)",
+              zh: "涂懿寧副教授課程教學示範網站（非正式官方網站）",
             })}
+            <span className="px-1.5 text-[#6e243c]/45" aria-hidden>
+              |
+            </span>
+            <a
+              href={official}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 font-semibold underline decoration-[#6e243c]/35 underline-offset-4 hover:decoration-[#6e243c]"
+            >
+              {tx(lang, { en: "Official imMBA website", zh: "國際經管官方網站" })}
+              <ExternalLink className="size-3.5" aria-hidden="true" />
+            </a>
           </p>
-          <p className="hidden shrink-0 tracking-[0.14em] uppercase sm:block">AACSB</p>
-          <a
-            href={official}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex shrink-0 items-center gap-1 font-semibold underline decoration-[#6e243c]/35 underline-offset-4 hover:decoration-[#6e243c]"
+          <button
+            type="button"
+            aria-expanded={menuOpen}
+            onClick={() => setMenuOpen((open) => !open)}
+            className="shrink-0 rounded-full border border-[#6e243c]/30 bg-white/40 px-3 py-1 text-xs font-semibold hover:bg-white/70"
           >
-            {tx(lang, { en: "Official imMBA website", zh: "國際經管官方網站" })}
-            <ExternalLink className="size-3.5" aria-hidden="true" />
-          </a>
+            {menuOpen
+              ? tx(lang, { en: "Collapse main menu", zh: "收合主選單" })
+              : tx(lang, { en: "Open main menu", zh: "展開主選單" })}
+          </button>
         </div>
       </div>
-      <div className="border-b border-white/10 bg-ink text-cream">
-        <div className="site-wrap flex h-16 items-center gap-4">
-          <Link href={withLang(lang, "/")} className="mr-auto flex items-center gap-2.5">
-            <span className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-white/15 bg-white/5">
-              <LogoMark className="size-7 text-cream" />
-            </span>
-            <span className="font-display text-2xl leading-none tracking-tight text-cream">imMBA</span>
-            <span className="hidden text-xs leading-tight text-cream/70 lg:block">
-              {tx(lang, {
-                en: "MBA in International Management",
-                zh: "國際經營管理碩士班",
-              })}
+
+      <div className="border-b border-[#d5e2ef] bg-[#eef3f8]">
+        <div className="site-wrap flex flex-col gap-4 py-4 sm:flex-row sm:items-center">
+          <Link href={withLang(lang, "/")} className="flex min-w-0 items-center gap-3 sm:gap-4">
+            <LogoMark className="size-14 shrink-0 sm:size-16" tone="light" />
+            <span className="min-w-0">
+              <span className="block font-display text-xl leading-tight text-ink sm:text-2xl">
+                {tx(lang, {
+                  en: "Fu Jen Catholic University",
+                  zh: "輔仁大學",
+                })}
+              </span>
+              <span className="mt-0.5 block text-sm text-[#3d4d63] sm:text-base">
+                {tx(lang, {
+                  en: "International MBA (imMBA)",
+                  zh: "國際經營管理碩士班 (imMBA)",
+                })}
+              </span>
             </span>
           </Link>
-
-          <nav className="hidden items-center gap-1 lg:flex">
-            {navGroups.map((group) => (
-              <div key={group.href} className="group relative">
-                <Link
-                  href={withLang(lang, group.href)}
-                  className="rounded-md px-3 py-2 text-sm text-cream/85 hover:bg-white/10 hover:text-cream"
-                >
-                  {tx(lang, group.label)}
-                </Link>
-                <div className="invisible absolute top-full left-0 z-20 w-80 pt-2 opacity-0 transition group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
-                  <div className="rounded-xl border border-border bg-cream p-2 text-foreground shadow-xl">
-                    {group.links.map((link) => (
-                      <Link
-                        key={link.href}
-                        href={withLang(lang, link.href)}
-                        className="block rounded-lg px-3 py-2.5 hover:bg-muted"
-                      >
-                        <span className="block text-sm font-medium">{tx(lang, link.label)}</span>
-                        <span className="mt-0.5 block text-xs leading-relaxed text-muted-foreground">
-                          {tx(lang, link.description)}
-                        </span>
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            ))}
-            <Link
-              href={withLang(lang, "/news")}
-              className="rounded-md px-3 py-2 text-sm text-cream/85 hover:bg-white/10 hover:text-cream"
-            >
-              {tx(lang, { en: "News", zh: "公告" })}
-            </Link>
-          </nav>
-
-          <form onSubmit={onSearch} className="hidden items-center md:flex">
-            <label className="relative">
+          <form onSubmit={onSearch} className="sm:ml-auto sm:w-56">
+            <label className="relative block">
               <span className="sr-only">{tx(lang, { en: "Search", zh: "搜尋" })}</span>
-              <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-cream/50" />
+              <Search className="pointer-events-none absolute top-1/2 left-3 size-3.5 -translate-y-1/2 text-[#3d4d63]" />
               <input
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder={tx(lang, { en: "Search", zh: "搜尋" })}
-                className="h-9 w-36 rounded-full border border-white/15 bg-white/5 pr-3 pl-8 text-sm text-cream outline-none placeholder:text-cream/40 focus:border-gold focus:w-48"
+                className="h-10 w-full rounded-full border border-[#c5d4e4] bg-white pr-3 pl-9 text-sm text-ink outline-none placeholder:text-[#7b8ba0] focus:border-burgundy"
               />
             </label>
           </form>
+        </div>
+      </div>
 
-          <Link
-            href={switchedPath(otherLang(lang))}
-            hrefLang={otherLang(lang) === "zh" ? "zh-Hant" : "en"}
-            onClick={(event) => onSwitchLanguage(event, otherLang(lang))}
-            className="hidden rounded-full border border-white/20 px-3 py-1.5 text-xs font-semibold tracking-wide text-cream hover:bg-white/10 sm:inline-flex"
-          >
-            {lang === "en" ? "中文" : "EN"}
-          </Link>
-
-          <Button
-            nativeButton={false}
-            render={<Link href={apply} />}
-            className="hidden h-9 px-4 sm:inline-flex"
-          >
-            {tx(lang, { en: "Apply", zh: "報名" })}
-          </Button>
-
-          <Sheet open={open} onOpenChange={setOpen}>
-            <SheetTrigger
-              render={<Button variant="ghost" size="icon" className="text-cream hover:bg-white/10 lg:hidden" />}
-            >
-              <Menu />
-              <span className="sr-only">{tx(lang, { en: "Menu", zh: "選單" })}</span>
-            </SheetTrigger>
-            <SheetContent side="right" className="w-[min(100%,22rem)] bg-cream">
-              <SheetHeader>
-                <SheetTitle className="flex items-center gap-2 font-display text-2xl">
-                  <LogoMark className="size-7 text-ink" tone="light" />
-                  imMBA
-                </SheetTitle>
-              </SheetHeader>
-              <div className="flex flex-col gap-6 overflow-y-auto px-4 pb-8">
-                <form onSubmit={onSearch}>
-                  <input
-                    value={query}
-                    onChange={(event) => setQuery(event.target.value)}
-                    placeholder={tx(lang, { en: "Search the program", zh: "搜尋本班資訊" })}
-                    className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus:border-ring"
-                  />
-                </form>
-                {navGroups.map((group) => (
-                  <div key={group.href}>
-                    <p className="text-xs font-semibold tracking-[0.16em] text-burgundy uppercase">
-                      {tx(lang, group.label)}
-                    </p>
-                    <div className="mt-2 flex flex-col">
-                      {group.links.map((link) => (
-                        <Link
-                          key={link.href}
-                          href={withLang(lang, link.href)}
-                          onClick={() => setOpen(false)}
-                          className="py-1.5 text-sm"
-                        >
-                          {tx(lang, link.label)}
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-                <div className="flex flex-col gap-2">
-                  {utilityLinks.map((link) => (
+      <div className="border-b border-border bg-white">
+        <div className="site-wrap flex flex-col gap-3 py-3 lg:flex-row lg:items-start lg:justify-between">
+          <div className="min-w-0 flex-1">
+            {menuOpen ? (
+              <nav aria-label={tx(lang, { en: "Main", zh: "主選單" })} className="flex flex-wrap gap-x-3 gap-y-2">
+                {mainNav.map((link) => {
+                  const href = withLang(lang, link.href);
+                  const active = pathname === href || pathname.startsWith(`${href}/`);
+                  return (
                     <Link
                       key={link.href}
-                      href={withLang(lang, link.href)}
-                      onClick={() => setOpen(false)}
-                      className="text-sm"
+                      href={href}
+                      aria-current={active ? "page" : undefined}
+                      className={`text-sm hover:text-burgundy ${active ? "font-semibold text-burgundy underline underline-offset-4" : "text-ink"}`}
                     >
                       {tx(lang, link.label)}
                     </Link>
-                  ))}
-                </div>
-                <div className="flex gap-2">
-                  <Link
-                    href={switchedPath(otherLang(lang))}
-                    onClick={(event) => {
-                      onSwitchLanguage(event, otherLang(lang));
-                      setOpen(false);
-                    }}
-                    className="inline-flex h-10 flex-1 items-center justify-center rounded-lg border border-border text-sm"
-                  >
-                    {lang === "en" ? "中文" : "English"}
-                  </Link>
-                  <Link
-                    href={apply}
-                    onClick={() => setOpen(false)}
-                    className="inline-flex h-10 flex-1 items-center justify-center rounded-lg bg-primary text-sm text-primary-foreground"
-                  >
-                    {tx(lang, { en: "Apply", zh: "報名" })}
-                  </Link>
-                </div>
-              </div>
-            </SheetContent>
-          </Sheet>
+                  );
+                })}
+              </nav>
+            ) : null}
+            <p className={`${menuOpen ? "mt-2" : ""} text-xs text-muted-foreground`}>
+              <a className="hover:text-ink" href="https://www.management.fju.edu.tw/">
+                {tx(lang, { en: "College of Management", zh: "管理學院" })}
+              </a>
+            </p>
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            <Link
+              href={switchedPath(otherLang(lang))}
+              hrefLang={otherLang(lang) === "zh" ? "zh-Hant" : "en"}
+              onClick={(event) => onSwitchLanguage(event, otherLang(lang))}
+              className="inline-flex h-9 items-center rounded-full border border-border px-3 text-xs font-semibold text-ink hover:bg-muted"
+            >
+              {lang === "en" ? "中文" : "EN"}
+            </Link>
+            <Button nativeButton={false} render={<Link href={apply} />} className="h-9 px-4">
+              {tx(lang, { en: "Apply Now", zh: "立即報名" })}
+            </Button>
+          </div>
         </div>
       </div>
     </header>

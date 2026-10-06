@@ -68,6 +68,12 @@ export default async function HomePage({ params }: { params: Promise<{ lang: str
   return (
     <>
       <section className="relative overflow-hidden border-b border-border">
+        <p
+          aria-hidden
+          className="pointer-events-none absolute top-6 right-0 hidden font-display text-[7rem] leading-none tracking-tight text-ink/5 lg:block"
+        >
+          WITH imMBA
+        </p>
         <div className="site-wrap grid items-end gap-12 py-16 lg:grid-cols-[1.3fr_0.7fr] lg:py-24">
           <div>
             <p className="text-xs font-semibold tracking-[0.22em] text-burgundy uppercase">
@@ -79,24 +85,30 @@ export default async function HomePage({ params }: { params: Promise<{ lang: str
                 zh: "把國際移動，寫進碩士的兩年。",
               })}
             </h1>
-            <p className="mt-6 max-w-xl text-lg leading-relaxed text-muted-foreground">
+            <p className="mt-6 max-w-xl text-lg leading-snug font-medium text-ink">
               {tx(lang, {
-                en: "Fu Jen’s MBA in International Management is AACSB-accredited. You study in English with classmates from more than 30 countries, and you can earn a second master’s in the United States, France, or Spain.",
-                zh: "輔大國際經營管理碩士班通過 AACSB 認證。課程全以英語進行，同學來自三十多個國家；也可以在美國、法國或西班牙再取得一個碩士。",
+                en: "Fu Jen Catholic University International MBA — Cultivating global managers with AACSB-accredited excellence.",
+                zh: "輔仁大學國際經營管理碩士班 — 以 AACSB 認證的學程，培養能走向國際的管理人才。",
+              })}
+            </p>
+            <p className="mt-4 max-w-xl text-base leading-relaxed text-muted-foreground">
+              {tx(lang, {
+                en: "You study in English with classmates from more than 30 countries, and you can earn a second master’s in the United States, France, or Spain.",
+                zh: "課程全以英語進行，同學來自三十多個國家；也可以在美國、法國或西班牙再取得一個碩士。",
               })}
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
                 href={withLang(lang, "/admissions")}
-                className="inline-flex h-11 items-center rounded-lg bg-primary px-5 text-sm font-medium text-primary-foreground"
+                className="inline-flex h-11 items-center rounded-full bg-[#e7a0b0] px-5 text-sm font-medium text-[#4a1828]"
               >
-                {tx(lang, { en: "See how to apply", zh: "查看招生資訊" })}
+                {tx(lang, { en: "Apply Now", zh: "立即報名" })}
               </Link>
               <Link
-                href={withLang(lang, "/dual-degree")}
-                className="inline-flex h-11 items-center rounded-lg border border-border bg-cream px-5 text-sm font-medium"
+                href={withLang(lang, "/marketplace")}
+                className="inline-flex h-11 items-center rounded-full border border-border bg-cream px-5 text-sm font-medium"
               >
-                {tx(lang, { en: "Dual degree routes", zh: "跨國雙碩士" })}
+                {tx(lang, { en: "Books & materials marketplace", zh: "書籍與教材市集" })}
               </Link>
             </div>
           </div>

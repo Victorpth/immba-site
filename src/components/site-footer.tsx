@@ -9,9 +9,7 @@ export function SiteFooter({ lang }: { lang: Lang }) {
       <div className="site-wrap grid gap-10 py-14 sm:grid-cols-2 lg:grid-cols-4">
         <div>
           <Link href={withLang(lang, "/")} className="flex items-center gap-3">
-            <span className="flex size-11 shrink-0 items-center justify-center rounded-lg border border-white/15 bg-white/5">
-              <LogoMark className="size-8 text-cream" />
-            </span>
+            <LogoMark className="size-12 text-cream" />
             <p className="font-display text-3xl leading-none">imMBA</p>
           </Link>
           <p className="mt-3 max-w-xs text-sm leading-relaxed text-cream/70">

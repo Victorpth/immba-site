@@ -1,38 +1,39 @@
 type LogoMarkProps = {
   className?: string;
-  /** Gold reads lighter on the ink header and deeper on cream. */
+  /** Light sits on the cream branding bar. Dark sits on the ink footer. */
   tone?: "dark" | "light";
 };
 
 export function LogoMark({ className, tone = "dark" }: LogoMarkProps) {
-  const gold = tone === "dark" ? "#e4c48a" : "#9a7840";
+  const onLight = tone === "light";
+  const line = onLight ? "#f7f3ec" : "currentColor";
+  const gold = "#e4c48a";
 
   return (
-    <svg viewBox="0 0 64 64" fill="none" aria-hidden="true" className={className}>
-      <circle cx="26" cy="36" r="15" stroke="currentColor" strokeWidth="2.1" />
+    <svg viewBox="0 0 80 80" className={className} role="img" aria-label="From Fu Jen, across partner campuses, into a global career">
+      <title>From Fu Jen, across partner campuses, into a global career</title>
+      <circle cx="40" cy="40" r="37" fill={onLight ? "#6e243c" : "none"} stroke={onLight ? "none" : line} strokeWidth="1.6" />
+      <circle cx="36" cy="44" r="16.5" stroke={line} strokeWidth="1.5" />
       <path
-        d="M26 21.2c4.8 4.1 7.6 8.8 7.6 14.8S30.8 46.7 26 50.8"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinecap="round"
+        d="M36 27.6c4.6 4.2 7.2 9.2 7.2 16.4s-2.6 12.2-7.2 16.4c-4.6-4.2-7.2-9.2-7.2-16.4s2.6-12.2 7.2-16.4Z"
+        stroke={line}
+        strokeWidth="1.35"
       />
+      <path d="M20.2 44h31.6" stroke={line} strokeWidth="1.35" strokeLinecap="round" />
       <path
-        d="M26 21.2c-4.8 4.1-7.6 8.8-7.6 14.8s3.2 10.7 7.6 14.8"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-      />
-      <path d="M12.4 36h27.2" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-      <path
-        d="M26 35.2c7.2-6.2 13.4-11.4 23.2-18.4"
+        d="M24.5 57.5c8-8 14.5-14 22-20.5 6.2-5.4 12.2-11.2 18.8-18.2"
         stroke={gold}
-        strokeWidth="2.35"
+        strokeWidth="2.3"
         strokeLinecap="round"
       />
+      <circle cx="24.5" cy="57.5" r="2.5" fill={gold} />
+      <circle cx="39" cy="45" r="1.7" fill={gold} />
+      <circle cx="50.5" cy="35" r="1.7" fill={gold} />
+      <circle cx="60" cy="25.5" r="1.7" fill={gold} />
       <path
-        d="M40.6 15.6H50.4V25.4"
+        d="M58.2 16.2h8.6v8.6"
         stroke={gold}
-        strokeWidth="2.35"
+        strokeWidth="2.3"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
