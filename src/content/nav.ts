@@ -19,7 +19,7 @@ export const navGroups: NavGroup[] = [
     links: [
       {
         href: "/about",
-        label: { en: "Overview and ranking", zh: "特色與排名" },
+        label: { en: "Overview and Ranking", zh: "特色與排名" },
         description: {
           en: "AACSB accreditation, Eduniversal ranking, and the international classroom.",
           zh: "AACSB 認證、Eduniversal 排名，以及國際化的課堂。",
@@ -27,7 +27,7 @@ export const navGroups: NavGroup[] = [
       },
       {
         href: "/environment",
-        label: { en: "Learning environment", zh: "學習環境" },
+        label: { en: "Our Learning Environment", zh: "我們的學習環境" },
         description: {
           en: "Campus, Guoxi Building, and how to reach Fu Jen.",
           zh: "校園、國璽樓，以及前往輔大的方式。",
@@ -161,6 +161,51 @@ export const utilityLinks: NavLink[] = [
     label: { en: "Contact", zh: "聯絡我們" },
     description: { en: "Office, phone, and inquiry form.", zh: "辦公室、電話與聯絡表單。" },
   },
+];
+
+export type PrimaryItem = {
+  label: Bi;
+  href: string;
+  children?: NavLink[];
+};
+
+/** Main bar. Items with children open a dropdown on hover or click. */
+export const primaryMenu: PrimaryItem[] = [
+  {
+    label: { en: "About", zh: "關於" },
+    href: "/about",
+    children: [navGroups[0].links[0], navGroups[0].links[1]],
+  },
+  {
+    label: { en: "Admissions", zh: "招生" },
+    href: "/admissions",
+    children: navGroups[1].links,
+  },
+  {
+    label: { en: "Courses", zh: "課程" },
+    href: "/curriculum",
+    children: [navGroups[2].links[0], navGroups[2].links[3]],
+  },
+  {
+    label: { en: "Faculty", zh: "師資" },
+    href: "/faculty",
+  },
+  {
+    label: { en: "imMBA Guide", zh: "imMBA 全攻略" },
+    href: "/guide",
+  },
+  {
+    label: { en: "Dual Degree", zh: "雙碩士" },
+    href: "/dual-degree",
+  },
+  {
+    label: { en: "Overseas Exchange", zh: "海外交換" },
+    href: "/exchange",
+  },
+  { label: utilityLinks[2].label, href: utilityLinks[2].href },
+  { label: utilityLinks[3].label, href: utilityLinks[3].href },
+  { label: utilityLinks[0].label, href: utilityLinks[0].href },
+  { label: utilityLinks[1].label, href: utilityLinks[1].href },
 ];
 
 /** Flat bar from the homepage section plan, in that order. */

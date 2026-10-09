@@ -1,6 +1,6 @@
 "use client";
 
-import { mainNav } from "@/content/nav";
+import { primaryMenu } from "@/content/nav";
 import { Button } from "@/components/ui/button";
 import { LogoMark } from "@/components/logo-mark";
 import { otherLang, tx, withLang, type Lang } from "@/lib/i18n";
@@ -13,11 +13,13 @@ export function SiteHeader({ lang }: { lang: Lang }) {
   const pathname = usePathname();
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(true);
+  const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [query, setQuery] = useState("");
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     setQuery(params.get("q") ?? "");
+    setOpenMenu(null);
   }, [pathname]);
 
   function switchedPath(next: Lang) {
@@ -118,19 +120,65 @@ export function SiteHeader({ lang }: { lang: Lang }) {
         <div className="site-wrap flex flex-col gap-3 py-3 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0 flex-1">
             {menuOpen ? (
-              <nav aria-label={tx(lang, { en: "Main", zh: "主選單" })} className="flex flex-wrap gap-x-3 gap-y-2">
-                {mainNav.map((link) => {
-                  const href = withLang(lang, link.href);
-                  const active = pathname === href || pathname.startsWith(`${href}/`);
+              <nav aria-label={tx(lang, { en: "Main", zh: "主選單" })} className="flex flex-wrap items-stretch">
+                {primaryMenu.map((item, index) => {
+                  const href = withLang(lang, item.href);
+                  const children = item.children ?? [];
+                  const active =
+                    pathname === href ||
+                    pathname.startsWith(`${href}/`) ||
+                    children.some((child) => {
+                      const childHref = withLang(lang, child.href);
+                      return pathname === childHref || pathname.startsWith(`${childHref}/`);
+                    });
+                  const shown = openMenu === item.href;
+                  const itemClass = `inline-flex items-center px-3 py-2 text-sm ${
+                    index > 0 ? "border-l border-[#d5dde6]" : ""
+                  } ${
+                    shown || active
+                      ? "border border-[#7aa2c4] bg-[#f4f8fc] font-medium text-[#1d4f86]"
+                      : "text-ink hover:text-[#1d4f86]"
+                  }`;
                   return (
-                    <Link
-                      key={link.href}
-                      href={href}
-                      aria-current={active ? "page" : undefined}
-                      className={`text-sm hover:text-burgundy ${active ? "font-semibold text-burgundy underline underline-offset-4" : "text-ink"}`}
+                    <div
+                      key={item.href}
+                      className="relative"
+                      onMouseEnter={() => {
+                        if (children.length > 0) setOpenMenu(item.href);
+                      }}
+                      onMouseLeave={() => {
+                        setOpenMenu((current) => (current === item.href ? null : current));
+                      }}
                     >
-                      {tx(lang, link.label)}
-                    </Link>
+                      {children.length > 0 ? (
+                        <button
+                          type="button"
+                          aria-expanded={shown}
+                          aria-haspopup="true"
+                          onClick={() => setOpenMenu((current) => (current === item.href ? null : item.href))}
+                          className={itemClass}
+                        >
+                          {tx(lang, item.label)}
+                        </button>
+                      ) : (
+                        <Link href={href} aria-current={active ? "page" : undefined} className={itemClass}>
+                          {tx(lang, item.label)}
+                        </Link>
+                      )}
+                      {children.length > 0 && shown ? (
+                        <div className="absolute top-full left-0 z-50 min-w-56 border border-[#c5d0dc] bg-white p-2 shadow-md">
+                          {children.map((child) => (
+                            <Link
+                              key={child.href}
+                              href={withLang(lang, child.href)}
+                              className="mt-1 block border border-[#d7dee6] px-3 py-2 text-sm text-ink first:mt-0 hover:border-[#7aa2c4] hover:text-[#1d4f86]"
+                            >
+                              {tx(lang, child.label)}
+                            </Link>
+                          ))}
+                        </div>
+                      ) : null}
+                    </div>
                   );
                 })}
               </nav>
