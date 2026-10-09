@@ -81,14 +81,14 @@ export default async function HomePage({ params }: { params: Promise<{ lang: str
             </p>
             <h1 className="mt-5 max-w-2xl text-4xl leading-[1.08] text-ink sm:text-5xl lg:text-6xl">
               {tx(lang, {
-                en: "Educating leaders who shape the future of global business.",
-                zh: "培育形塑全球商業未來的領導者。",
+                en: "An MBA built for careers that cross borders.",
+                zh: "為跨境職涯而設的 MBA。",
               })}
             </h1>
             <p className="mt-6 max-w-xl text-lg leading-snug font-medium text-ink">
               {tx(lang, {
-                en: "Fu Jen’s International MBA is taught entirely in English and accredited by AACSB. The classroom is already global.",
-                zh: "輔大國際經營管理碩士班全英語授課，並通過 AACSB 認證。課堂本身就是國際場域。",
+                en: "Fu Jen’s International MBA is taught entirely in English and accredited by AACSB. You learn management with people who did not grow up in the same country.",
+                zh: "輔大國際經營管理碩士班全英語授課，並通過 AACSB 認證。你和來自不同國家的人一起學管理。",
               })}
             </p>
             <p className="mt-4 max-w-xl text-base leading-relaxed text-muted-foreground">
