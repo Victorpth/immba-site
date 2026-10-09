@@ -85,7 +85,7 @@ export function SiteHeader({ lang }: { lang: Lang }) {
       <div className="border-b border-[#d5e2ef] bg-[#eef3f8]">
         <div className="site-wrap flex flex-col gap-4 py-4 sm:flex-row sm:items-center">
           <Link href={withLang(lang, "/")} className="flex min-w-0 items-center gap-3 sm:gap-4">
-            <LogoMark className="h-24 w-auto shrink-0 object-contain sm:h-28" tone="light" />
+            <LogoMark className="size-24 shrink-0 object-contain sm:size-28" tone="light" />
             <span className="min-w-0">
               <span className="block font-display text-xl leading-tight text-ink sm:text-2xl">
                 {tx(lang, {
