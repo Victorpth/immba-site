@@ -74,39 +74,39 @@ export default async function HomePage({ params }: { params: Promise<{ lang: str
         >
           WITH imMBA
         </p>
-        <div className="site-wrap grid items-end gap-12 py-16 lg:grid-cols-[1.3fr_0.7fr] lg:py-24">
+        <div className="site-wrap grid items-end gap-12 py-16 lg:grid-cols-[1.15fr_0.85fr] lg:py-24">
           <div>
             <p className="text-xs font-semibold tracking-[0.22em] text-burgundy uppercase">
               {tx(lang, { en: "New Taipei City · Taught in English", zh: "新北市 · 全英語授課" })}
             </p>
-            <h1 className="mt-5 max-w-xl text-5xl leading-[1.05] text-ink sm:text-6xl">
+            <h1 className="mt-5 max-w-2xl text-4xl leading-[1.08] text-ink sm:text-5xl lg:text-6xl">
               {tx(lang, {
-                en: "A management degree with a passport in the curriculum.",
-                zh: "把國際移動，寫進碩士的兩年。",
+                en: "Educating leaders who shape the future of global business.",
+                zh: "培育形塑全球商業未來的領導者。",
               })}
             </h1>
             <p className="mt-6 max-w-xl text-lg leading-snug font-medium text-ink">
               {tx(lang, {
-                en: "Fu Jen Catholic University International MBA — Cultivating global managers with AACSB-accredited excellence.",
-                zh: "輔仁大學國際經營管理碩士班 — 以 AACSB 認證的學程，培養能走向國際的管理人才。",
+                en: "Fu Jen’s International MBA is taught entirely in English and accredited by AACSB. The classroom is already global.",
+                zh: "輔大國際經營管理碩士班全英語授課，並通過 AACSB 認證。課堂本身就是國際場域。",
               })}
             </p>
             <p className="mt-4 max-w-xl text-base leading-relaxed text-muted-foreground">
               {tx(lang, {
-                en: "You study in English with classmates from more than 30 countries, and you can earn a second master’s in the United States, France, or Spain.",
-                zh: "課程全以英語進行，同學來自三十多個國家；也可以在美國、法國或西班牙再取得一個碩士。",
+                en: "You study with classmates from more than 30 countries, and you can earn a second master’s in the United States, France, or Spain.",
+                zh: "同學來自三十多個國家；也可以在美國、法國或西班牙再取得一個碩士。",
               })}
             </p>
-            <div className="mt-8 flex flex-wrap gap-3">
+            <div className="mt-8 flex flex-wrap items-center gap-3">
               <Link
                 href={withLang(lang, "/admissions")}
-                className="inline-flex h-11 items-center rounded-full bg-[#e7a0b0] px-5 text-sm font-medium text-[#4a1828]"
+                className="inline-flex h-12 items-center rounded-full bg-primary px-6 text-base font-semibold text-primary-foreground"
               >
                 {tx(lang, { en: "Apply Now", zh: "立即報名" })}
               </Link>
               <Link
                 href={withLang(lang, "/marketplace")}
-                className="inline-flex h-11 items-center rounded-full border border-border bg-cream px-5 text-sm font-medium"
+                className="inline-flex h-11 items-center rounded-full border border-border bg-cream px-5 text-sm font-medium text-ink"
               >
                 {tx(lang, { en: "Books & materials marketplace", zh: "書籍與教材市集" })}
               </Link>
