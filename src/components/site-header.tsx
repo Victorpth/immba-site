@@ -53,8 +53,8 @@ export function SiteHeader({ lang }: { lang: Lang }) {
         <div className="site-wrap flex flex-wrap items-center justify-between gap-x-4 gap-y-2 py-2 text-xs sm:text-[13px]">
           <p className="min-w-0 leading-relaxed">
             {tx(lang, {
-              en: "Course teaching demonstration site by Professor Yi-Ning Tu (not the official website)",
-              zh: "涂懿寧副教授課程教學示範網站（非正式官方網站）",
+              en: "Course teaching demonstration site by Victor Pothet (not the official website)",
+              zh: "Victor Pothet 課程教學示範網站（非正式官方網站）",
             })}
             <span className="px-1.5 text-[#6e243c]/45" aria-hidden>
               |
