@@ -1,5 +1,6 @@
 import { DocList } from "@/components/doc-list";
 import { PageIntro } from "@/components/page-intro";
+import { ExternalLink } from "@/components/site-links";
 import { isLang, tx } from "@/lib/i18n";
 import { pageMeta } from "@/lib/meta";
 import { notFound } from "next/navigation";
@@ -51,8 +52,8 @@ const partners = [
     place: { en: "Flint, about 100 km from Detroit", zh: "Flint，底特律西北約 100 公里" },
     degree: "Master of Business Administration",
     points: {
-      en: ["AACSB accredited. Nine concentrations.", "Declare in week one so your Fu Jen courses follow the UM-Flint plan.", "In year one: the agreed courses and thesis, GPA 3.0, and TOEFL iBT. Sub-scores change, so check UM-Flint.", "In-state tuition and scholarships are offered to imMBA students."],
-      zh: ["通過 AACSB，MBA 有九個專業領域。", "第一週表明意願，碩一課程才會按 UM-Flint 計畫分流。", "第一年須完成約定課程與論文、GPA 3.0，以及托福 iBT。分數含分項可能調整，請以該校網站為準。", "對國際經管學生提供州內學費與獎學金。"],
+      en: ["Flint is about 100 km northwest of Detroit. Winter is about −10°C and summer about 25°C.", "AACSB accredited, listed among Best Graduate Business Programs, and in the top 15 business schools in Michigan. Nine MBA concentrations.", "Declare in week one. Apply to the partner in semester two. The office recommends; UM-Flint decides.", "Year one: the agreed thesis and courses, GPA 3.0, and TOEFL iBT. Minimums, including sub-scores, change, so check UM-Flint. In-state tuition and scholarships are offered."],
+      zh: ["Flint 在底特律西北約 100 公里。冬季約 −10°C，夏季約 25°C。", "通過 AACSB，列入 Best Graduate Business Programs，並在密西根州商學院前 15。MBA 有九個專業領域。", "第一週表明意願，第二學期向對方申請。所辦推薦，錄取由 UM-Flint 決定。", "第一年須完成約定論文與課程、GPA 3.0，以及托福 iBT。最低分含分項會調整，請以該校網站為準。提供州內學費與獎學金。"],
     },
     href: "https://www.umflint.edu/about/explore-flint/",
   },
@@ -61,8 +62,8 @@ const partners = [
     place: { en: "Bordeaux or Marseille", zh: "波爾多或馬賽" },
     degree: "Master in Management · 60 ECTS",
     points: {
-      en: ["Triple-accredited: AACSB, AMBA, and EQUIS.", "At least 240 ECTS (120 credits) from the bachelor’s degree.", "The agreed Fu Jen courses, the thesis, and the English level in the contract.", "KEDGE tuition is waived. You pay Fu Jen. A six-month internship or practical period is required after admission."],
-      zh: ["三冠認證：AACSB、AMBA、EQUIS。", "大學學歷至少 240 ECTS（120 學分）。", "完成輔大約定課程、論文，以及合約中的英語條件。", "KEDGE 學費全免，僅繳輔大全額學雜費。入學後須有六個月以上實習或實務經驗。"],
+      en: ["Formed in 2013 from ESC Bordeaux (1874) and Euromed / ESC Marseille (1872). Campuses in Bordeaux and Marseille.", "Triple crown: AACSB, AMBA, and EQUIS, plus Grandes Écoles. Fewer than 1% of business schools hold all three.", "Master in Management is 60 ECTS, plus at least six months of internship or practical experience after admission.", "Year one: at least 240 ECTS (120 credits) from the bachelor’s degree, the agreed thesis and courses, and the English qualification. Pay full tuition only at Fu Jen; KEDGE is free."],
+      zh: ["2013 年由波爾多 ESC（1874）與馬賽 Euromed / ESC（1872）合併。校區在波爾多與馬賽。", "三冠認證 AACSB、AMBA、EQUIS，並具 Grandes Écoles 地位。同時持有三項認證的商學院不到 1%。", "Master in Management 為 60 ECTS，入學後另須至少六個月實習或實務經驗。", "第一年須具備大學至少 240 ECTS（120 學分）、完成約定論文與課程，以及英語條件。只繳輔大全額學雜費，KEDGE 免學費。"],
     },
     href: "https://student.kedge.edu/",
   },
@@ -71,8 +72,8 @@ const partners = [
     place: { en: "Barcelona, Universitat Ramon Llull", zh: "巴塞隆納，拉孟大學" },
     degree: "MIMDE or MIBM",
     points: {
-      en: ["Founded in 1905, AACSB accredited, and a member of the Jesuit business-school network.", "Choose International Marketing in a Digital Environment, or Industrial Business Management.", "Complete the Fu Jen courses and thesis, the GPA in the agreement, and the English requirement.", "Tuition at IQS is discounted. The figure is reviewed each year in the contract."],
-      zh: ["創於 1905 年，通過 AACSB，為耶穌會商管學院聯盟成員。", "可選數位環境國際行銷碩士（MIMDE）或工業企業管理碩士（MIBM）。", "完成輔大約定課程與論文、合約中的 GPA 與英語條件。", "IQS 學費依合約優惠，金額每年檢視。"],
+      en: ["Founded in 1905. A founding member of Ramon Llull University and of IAJBS, and AACSB accredited. The Financial Times places its Master in Management in the top 20.", "Degrees on the agreement: MIMDE and MIBM.", "Year one: the thesis and courses in the Fu Jen–IQS agreement, the GPA stated there, and the English qualification. The published page does not print a GPA number.", "Tuition is set in the agreements and reviewed each year. English requirements change; check the partner site."],
+      zh: ["創於 1905 年，為拉孟大學與 IAJBS 創始成員，並通過 AACSB。金融時報將其 Master in Management 列為前 20。", "合約學位為 MIMDE 與 MIBM。", "第一年須完成輔大與 IQS 約定的論文與課程、合約所載 GPA，以及英語條件。官方頁面沒有寫出 GPA 數字。", "學費寫在合約裡，每年檢視。英語條件會調整，請以合作學校網站為準。"],
     },
     href: "https://www.iqs.edu/en/about-iqs/accreditations-and-rankings",
   },
@@ -118,7 +119,7 @@ export default async function DualDegreePage({ params }: { params: Promise<{ lan
       <section className="border-t border-border bg-cream/40">
         <div className="site-wrap grid gap-6 py-14">
           {partners.map((partner) => (
-            <article key={partner.name} className="rounded-2xl border border-border bg-cream p-6 lg:p-8">
+            <article key={partner.name} className="interactive-card rounded-2xl border-border bg-cream p-6 lg:p-8">
               <p className="text-xs font-semibold tracking-[0.16em] text-burgundy uppercase">{tx(lang, partner.place)}</p>
               <h2 className="mt-2 text-3xl text-ink">{partner.name}</h2>
               <p className="mt-1 text-sm text-muted-foreground">{partner.degree}</p>
@@ -129,9 +130,9 @@ export default async function DualDegreePage({ params }: { params: Promise<{ lan
                   </li>
                 ))}
               </ul>
-              <a href={partner.href} className="mt-5 inline-flex text-sm underline underline-offset-4">
-                {tx(lang, { en: "Partner site", zh: "合作學校網站" })}
-              </a>
+              <ExternalLink href={partner.href} className="mt-5 text-sm text-ink">
+                {tx(lang, { en: `${partner.name} website`, zh: `${partner.name} 官方網站` })}
+              </ExternalLink>
             </article>
           ))}
         </div>

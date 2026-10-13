@@ -26,19 +26,19 @@ export const navGroups: NavGroup[] = [
         },
       },
       {
-        href: "/environment",
-        label: { en: "Our Learning Environment", zh: "我們的學習環境" },
-        description: {
-          en: "Campus, Guoxi Building, and how to reach Fu Jen.",
-          zh: "校園、國璽樓，以及前往輔大的方式。",
-        },
-      },
-      {
         href: "/regulations",
         label: { en: "Regulations", zh: "規定及辦法" },
         description: {
           en: "Program committees and the student scholarship regulations.",
           zh: "學程會議、課委會與學生獎助學金辦法。",
+        },
+      },
+      {
+        href: "/environment",
+        label: { en: "Our Learning Environment", zh: "我們的學習環境" },
+        description: {
+          en: "Campus, Guoxi Building, and how to reach Fu Jen.",
+          zh: "校園、國璽樓，以及前往輔大的方式。",
         },
       },
     ],
@@ -174,7 +174,7 @@ export const primaryMenu: PrimaryItem[] = [
   {
     label: { en: "About", zh: "關於" },
     href: "/about",
-    children: [navGroups[0].links[0], navGroups[0].links[1]],
+    children: navGroups[0].links,
   },
   {
     label: { en: "Admissions", zh: "招生" },

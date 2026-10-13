@@ -2,6 +2,7 @@
 
 import { faculty, type FacultyMember } from "@/content/faculty";
 import { Input } from "@/components/ui/input";
+import { ExternalLink } from "@/components/site-links";
 import { tx, type Lang } from "@/lib/i18n";
 import { useMemo, useState } from "react";
 
@@ -46,7 +47,7 @@ export function FacultyBrowser({ lang }: { lang: Lang }) {
               key={item.id}
               type="button"
               onClick={() => setFilter(item.id)}
-              className={`rounded-full px-3 py-1.5 text-sm ${
+              className={`min-h-11 rounded-full px-4 text-sm font-medium ${
                 filter === item.id ? "bg-ink text-cream" : "bg-muted text-foreground"
               }`}
             >
@@ -58,7 +59,7 @@ export function FacultyBrowser({ lang }: { lang: Lang }) {
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           placeholder={tx(lang, { en: "Search name or field", zh: "搜尋姓名或專長" })}
-          className="h-10 sm:max-w-xs"
+          className="h-11 text-base sm:max-w-xs"
           aria-label={tx(lang, { en: "Search faculty", zh: "搜尋師資" })}
         />
       </div>
@@ -84,7 +85,7 @@ export function FacultyBrowser({ lang }: { lang: Lang }) {
 
 function FacultyCard({ person, lang }: { person: FacultyMember; lang: Lang }) {
   return (
-    <article className="flex h-full gap-4 rounded-2xl border border-border bg-cream p-5">
+    <article className="interactive-card flex h-full gap-4 rounded-2xl border-border bg-cream p-5">
       <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-ink font-display text-lg text-cream">
         {initials(person.name)}
       </div>
@@ -93,7 +94,7 @@ function FacultyCard({ person, lang }: { person: FacultyMember; lang: Lang }) {
         <p className="mt-1 text-sm text-burgundy">{tx(lang, person.rank)}</p>
         <p className="mt-3 text-sm leading-relaxed text-foreground">{tx(lang, person.specialties)}</p>
         <p className="mt-2 text-sm text-muted-foreground">{tx(lang, person.education)}</p>
-        <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
+        <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-sm text-[#243044]">
           {person.office ? <span>{person.office}</span> : null}
           {person.phone ? <span>{person.phone}</span> : null}
           {person.email ? (
@@ -102,9 +103,9 @@ function FacultyCard({ person, lang }: { person: FacultyMember; lang: Lang }) {
             </a>
           ) : null}
           {person.website ? (
-            <a className="underline underline-offset-2" href={person.website}>
-              {tx(lang, { en: "Website", zh: "個人網站" })}
-            </a>
+            <ExternalLink href={person.website} className="text-sm">
+              {tx(lang, { en: "Personal website", zh: "個人網站" })}
+            </ExternalLink>
           ) : null}
         </div>
       </div>

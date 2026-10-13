@@ -27,8 +27,8 @@ export default async function DownloadsPage({ params }: { params: Promise<{ lang
         eyebrow={{ en: "Documents", zh: "文件" }}
         title={{ en: "The files the office actually uses.", zh: "所辦真正在用的檔案。" }}
         lede={{
-          en: "Brochures, rules, and forms, grouped the way a student looks for them. Files open from the university’s own document library.",
-          zh: "簡章、辦法與表格，按學生會找的方式分類。檔案開啟自學校既有的文件庫。",
+          en: "The official English Download page currently lists no files. The documents below are the ones the office publishes on admissions, curriculum, graduation, and dual degree.",
+          zh: "官方英文下載頁目前沒有檔案列。下列文件是所辦在招生、課程、畢業與雙碩士頁公布的檔案。",
         }}
       />
       <section className="site-wrap space-y-10 py-14">

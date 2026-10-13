@@ -25,6 +25,54 @@ export const categoryLabel: Record<NewsCategory, Bi> = {
 
 export const news: NewsItem[] = [
   {
+    slug: "bond-university",
+    date: "2026-10-13",
+    category: "partnerships",
+    title: {
+      en: "Next stop: Australia’s Gold Coast? imMBA and Bond University",
+      zh: "下一站，澳洲黃金海岸？imMBA 與邦德大學",
+    },
+    summary: {
+      en: "Bond University’s Christine Huang visited to discuss a 1+1 dual master’s. Course maps and credit recognition are still being worked out.",
+      zh: "邦德大學 Christine Huang 來訪，洽談 1+1 雙碩士。課表與學分認定仍在協調。",
+    },
+    body: {
+      en: [
+        "imMBA and Bond University are discussing a 1+1 dual master’s and both sides want to continue. Christine Huang, Bond’s International Regional Coordinator, visited the program in person. The two schools are working through course arrangements and credit recognition.",
+        "Bond sits on the Gold Coast. It is known for small classes. In the 2027 QS ranking it is 518, and its business school holds AACSB and EQUIS.",
+        "Nothing is signed yet. If it proceeds, Australia would sit beside the United States, France, and Spain as a dual-master’s destination.",
+      ],
+      zh: [
+        "國際經管與澳洲邦德大學正在談 1+1 雙碩士，雙方都有意繼續。邦德大學國際區域協調人 Christine Huang 親自來訪。兩邊正在處理課程安排與學分認定。",
+        "邦德大學在黃金海岸，以小班教學著稱。2027 年 QS 排名第 518，商學院持有 AACSB 與 EQUIS。",
+        "合作尚未定案。若談成，澳洲會成為美國、法國與西班牙之外的另一個雙碩士地點。",
+      ],
+    },
+  },
+  {
+    slug: "ut-dallas",
+    date: "2026-10-06",
+    category: "partnerships",
+    title: {
+      en: "imMBA and UT Dallas: the dual master’s talks continue",
+      zh: "imMBA 與德州大學達拉斯分校：雙碩士持續推進",
+    },
+    summary: {
+      en: "Credit recognition is under discussion. Alumni founded a Fu Jen–UTD Sustainability Scholarship of US$1,000.",
+      zh: "學分認定仍在討論。校友設立輔大—UTD 永續獎學金，每名受獎人 1,000 美元。",
+    },
+    body: {
+      en: [
+        "imMBA is moving a dual master’s forward with the University of Texas at Dallas. Credit recognition would let students finish both degrees with less time and less cost. Details will be announced when they are fixed.",
+        "Distinguished alumni 詹益明 and 陳景華, with support from the ECLAT Foundation, set up the Fu Jen–UTD Sustainability Scholarship. Each recipient receives US$1,000 and may apply again while still eligible.",
+      ],
+      zh: [
+        "國際經管與德州大學達拉斯分校的雙碩士持續推進。透過學分認定，學生有機會以較少的時間與費用完成兩個學位。細節確定後另行公布。",
+        "傑出校友詹益明先生與陳景華女士，在儒鴻基金會支持下設立「輔大—UTD 永續獎學金」。每名受獎人獲得 1,000 美元，符合資格者可以再次申請。",
+      ],
+    },
+  },
+  {
     slug: "spring-2027-international",
     date: "2026-08-19",
     pinned: true,

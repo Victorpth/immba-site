@@ -43,9 +43,12 @@ export default async function LangLayout({
 
   return (
     <div className="flex min-h-full flex-col">
+      <a className="skip-link" href="#content">
+        {tx(lang, { en: "Skip to content", zh: "跳至主要內容" })}
+      </a>
       <SetLang lang={lang} />
       <SiteHeader lang={lang} />
-      <main className="flex-1">{children}</main>
+      <main id="content" className="flex-1">{children}</main>
       <SiteFooter lang={lang} />
     </div>
   );

@@ -1,7 +1,8 @@
 import { NewsCard } from "@/components/news-card";
 import { PageIntro } from "@/components/page-intro";
+import { ExternalLink } from "@/components/site-links";
 import { news } from "@/content/news";
-import { isLang } from "@/lib/i18n";
+import { isLang, tx } from "@/lib/i18n";
 import { pageMeta } from "@/lib/meta";
 import { notFound } from "next/navigation";
 
@@ -28,14 +29,24 @@ export default async function HighlightsPage({ params }: { params: Promise<{ lan
         eyebrow={{ en: "Stories", zh: "集錦" }}
         title={{ en: "What the semester has looked like.", zh: "這個學期，學程在做這些事。" }}
         lede={{
-          en: "Sessions, course spotlights, and visits from partner schools. Each card opens the full note.",
-          zh: "說明會、課程焦點，以及合作學校的來訪。點進卡片可讀完整內容。",
+          en: "The current official highlights are the Bond University visit, the UT Dallas scholarship, and the 29 September admissions session. Earlier notes stay on this page.",
+          zh: "官方活動集錦目前是邦德大學來訪、德州大學達拉斯分校獎學金，以及 9 月 29 日招生說明會。較早的紀錄仍留在本頁。",
         }}
       />
       <section className="site-wrap grid gap-4 py-14 md:grid-cols-2">
         {stories.map((item) => (
           <NewsCard key={item.slug} item={item} lang={lang} />
         ))}
+      </section>
+      <section className="border-t border-border">
+        <div className="site-wrap py-10">
+          <ExternalLink
+            href="https://www.management.fju.edu.tw/esubweb/immbaengindex/subedit.php?EID=36"
+            className="text-sm text-ink"
+          >
+            {tx(lang, { en: "Official highlights page", zh: "官方活動集錦" })}
+          </ExternalLink>
+        </div>
       </section>
     </>
   );

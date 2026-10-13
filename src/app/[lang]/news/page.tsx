@@ -1,14 +1,14 @@
-import { NewsCard } from "@/components/news-card";
 import { PageIntro } from "@/components/page-intro";
-import { news } from "@/content/news";
+import { PublicAnnouncements } from "@/components/public-announcements";
+import { AnnouncementSource } from "@/components/site-links";
 import { isLang } from "@/lib/i18n";
 import { pageMeta } from "@/lib/meta";
 import { notFound } from "next/navigation";
 
-const title = { en: "News", zh: "公告" };
+const title = { en: "Announcements", zh: "公告" };
 const description = {
-  en: "Announcements from the MBA in International Management.",
-  zh: "國際經營管理碩士班最新公告。",
+  en: "Announcements from the MBA in International Management, shown in the language selected on the site.",
+  zh: "國際經營管理碩士班公告，依網站目前選擇的語言顯示標題與內容。",
 };
 
 export function generateMetadata({ params }: { params: Promise<{ lang: string }> }) {
@@ -19,30 +19,22 @@ export default async function NewsPage({ params }: { params: Promise<{ lang: str
   const { lang: raw } = await params;
   if (!isLang(raw)) notFound();
   const lang = raw;
-  const pinned = news.filter((item) => item.pinned);
-  const rest = news.filter((item) => !item.pinned).sort((a, b) => (a.date < b.date ? 1 : -1));
 
   return (
     <>
       <PageIntro
         lang={lang}
-        eyebrow={{ en: "News", zh: "公告" }}
-        title={{ en: "Pinned first, then the newest.", zh: "置頂在前，其餘按日期。" }}
+        eyebrow={{ en: "Announcements", zh: "公告" }}
+        title={{ en: "Title and content, in the language you selected.", zh: "標題與內容，依你選擇的語言顯示。" }}
         lede={{
-          en: "Application windows, course news, and notes from the office.",
-          zh: "招生窗口、課程消息，以及所辦記事。",
+          en: "Published announcements from AdminNews. View Details opens the notice link.",
+          zh: "來自公告管理的已發布公告。查看詳情會開啟該則連結。",
         }}
       />
       <section className="site-wrap py-14">
-        <div className="grid gap-4">
-          {pinned.map((item) => (
-            <NewsCard key={item.slug} item={item} lang={lang} featured />
-          ))}
-        </div>
-        <div className="mt-4 grid gap-4 md:grid-cols-2">
-          {rest.map((item) => (
-            <NewsCard key={item.slug} item={item} lang={lang} />
-          ))}
+        <PublicAnnouncements lang={lang} />
+        <div className="mt-8">
+          <AnnouncementSource lang={lang} />
         </div>
       </section>
     </>

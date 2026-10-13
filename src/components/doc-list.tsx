@@ -1,3 +1,4 @@
+import { ResourceLink, ExternalLink } from "@/components/site-links";
 import { docsFor, type DocGroup } from "@/content/documents";
 import { tx, type Lang } from "@/lib/i18n";
 
@@ -12,22 +13,24 @@ export function DocList({ lang, group }: { lang: Lang; group?: DocGroup }) {
   }
   return (
     <ul className="divide-y divide-border rounded-2xl border border-border bg-cream">
-      {items.map((doc) => (
-        <li key={doc.id}>
-          <a
-            href={doc.href}
-            className="flex flex-col gap-2 px-5 py-4 transition hover:bg-muted/60 sm:flex-row sm:items-center sm:justify-between"
-          >
-            <span>
-              <span className="block font-medium text-ink">{tx(lang, doc.title)}</span>
-              <span className="mt-1 block text-sm text-muted-foreground">{tx(lang, doc.note)}</span>
-            </span>
-            <span className="w-fit rounded-full border border-border px-2 py-0.5 text-[11px] font-semibold tracking-wide text-burgundy">
-              {doc.kind}
-            </span>
-          </a>
-        </li>
-      ))}
+      {items.map((doc) => {
+        const title = tx(lang, doc.title);
+        const note = tx(lang, doc.note);
+        return (
+          <li key={doc.id} className="px-5 py-4">
+            {doc.kind === "Web" ? (
+              <ExternalLink href={doc.href} className="font-medium text-ink">
+                {title}
+              </ExternalLink>
+            ) : (
+              <ResourceLink href={doc.href} className="font-medium">
+                {title}
+              </ResourceLink>
+            )}
+            <p className="mt-1 text-sm text-muted-foreground">{note}</p>
+          </li>
+        );
+      })}
     </ul>
   );
 }

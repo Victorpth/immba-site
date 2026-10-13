@@ -1,8 +1,8 @@
 import { DocList } from "@/components/doc-list";
 import { PageIntro } from "@/components/page-intro";
+import { TextLink } from "@/components/site-links";
 import { isLang, tx, withLang } from "@/lib/i18n";
 import { pageMeta } from "@/lib/meta";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
 const title = { en: "Tuition and scholarships", zh: "學雜費與獎助學金" };
@@ -76,9 +76,9 @@ export default async function ScholarshipsPage({ params }: { params: Promise<{ l
         <div className="mt-8">
           <DocList lang={lang} group="scholarships" />
         </div>
-        <Link href={withLang(lang, "/admissions")} className="mt-8 inline-flex text-sm underline underline-offset-4">
-          {tx(lang, { en: "Back to admissions", zh: "返回招生資訊" })}
-        </Link>
+        <TextLink href={withLang(lang, "/admissions")} className="mt-8 text-sm">
+          {tx(lang, { en: "Read admissions", zh: "閱讀招生資訊" })}
+        </TextLink>
       </section>
     </>
   );

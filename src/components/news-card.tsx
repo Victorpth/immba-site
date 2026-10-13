@@ -14,13 +14,13 @@ export function NewsCard({ item, lang, featured = false }: { item: NewsItem; lan
   return (
     <Link
       href={withLang(lang, `/news/${item.slug}`)}
-      className={`group flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-cream ${featured ? "sm:flex-row" : ""}`}
+      className={`interactive-card group flex h-full flex-col overflow-hidden rounded-2xl border-border bg-cream ${featured ? "sm:flex-row" : ""}`}
     >
       <div className={`${tone[item.category]} ${featured ? "sm:w-2/5" : ""} relative min-h-36 p-5 text-cream`}>
-        <p className="text-[11px] font-semibold tracking-[0.18em] uppercase opacity-80">
+        <p className="text-sm font-semibold text-white uppercase">
           {tx(lang, categoryLabel[item.category])}
         </p>
-        <p className="font-display absolute right-4 bottom-3 text-5xl text-white/25">
+        <p aria-hidden className="font-display absolute right-4 bottom-3 text-5xl text-white/30">
           {item.date.slice(5, 7)}
         </p>
       </div>

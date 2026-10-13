@@ -1,4 +1,5 @@
 import { PageIntro } from "@/components/page-intro";
+import { ExternalLink, TextLink } from "@/components/site-links";
 import { isLang, tx, withLang } from "@/lib/i18n";
 import { pageMeta } from "@/lib/meta";
 import Link from "next/link";
@@ -21,31 +22,58 @@ export default async function AboutPage({ params }: { params: Promise<{ lang: st
 
   const points = [
     {
-      title: { en: "AACSB, and kept", zh: "AACSB，而且持續通過" },
+      title: { en: "AACSB", zh: "AACSB" },
       body: {
-        en: "The College of Management earned AACSB accreditation in 2005, the first business school across the Taiwan Strait to do so, and passed continuing reviews in 2010, 2015, 2020, and 2025. About five percent of business schools worldwide hold this accreditation.",
-        zh: "管理學院於 2005 年通過 AACSB，為兩岸第一所，並在 2010、2015、2020 與 2025 年持續通過。全球商管學院中，約僅 5% 持有這項認證。",
+        en: "The College of Management is AACSB accredited. About 5% of business schools worldwide hold that accreditation.",
+        zh: "管理學院通過 AACSB。全球商管學院中，約 5% 持有這項認證。",
       },
     },
     {
       title: { en: "Eduniversal 2025", zh: "Eduniversal 2025" },
       body: {
-        en: "In the International Management category, Fu Jen imMBA ranks in the top three in Taiwan and the top 20 in Far East Asia.",
-        zh: "在 International Management 分類，輔大國際經管名列全台前三、遠東地區前二十。",
+        en: "In International Management, Fu Jen imMBA ranks in the top 3 in Taiwan and the top 20 in Far East Asia.",
+        zh: "在 International Management 分類，輔大國際經管名列全台前 3、遠東地區前 20。",
       },
     },
     {
-      title: { en: "A Catholic university’s network", zh: "天主教大學的國際網絡" },
+      title: { en: "More than 30 countries", zh: "三十多個國家" },
       body: {
-        en: "Fu Jen belongs to Catholic and Jesuit university networks, including associations of Catholic universities, Jesuit universities, and Christian universities in Asia. That network is part of how the college meets partner schools.",
-        zh: "輔大身為天主教大學，參與天主教大學聯盟、耶穌會大學聯盟與亞洲基督宗教大學聯盟。這些網絡也是學院認識合作學校的途徑。",
+        en: "Local and international students study together. In a course, the mix of local and international students can be about one to one.",
+        zh: "本地生與國際生一起上課。同一門課裡，兩邊的人數有時接近一比一。",
       },
     },
     {
-      title: { en: "English since 2014", zh: "2014 年起全面英語授課" },
+      title: { en: "Two master’s degrees in two years", zh: "兩年、兩個碩士" },
       body: {
-        en: "The program opened in 2006, when the Ministry of Education selected Fu Jen alongside National Taiwan University and National Chengchi University to pilot a professional business school. From academic year 2014, every imMBA course has been taught in English.",
-        zh: "學程於 2006 年成立。當年教育部遴選輔大與臺灣大學、政治大學同步試辦商管專業學院。自 103 學年度起，國際經管所有課程以英語授課。",
+        en: "A dual master’s with UM-Flint, KEDGE, or IQS can be finished in about two years, which is economical in time and in budget.",
+        zh: "與密西根大學 Flint 分校、KEDGE 或 IQS 的雙碩士，約兩年可以完成，時間與費用都比較精省。",
+      },
+    },
+  ];
+
+  const paths = [
+    {
+      href: "/curriculum",
+      title: { en: "The curriculum", zh: "課程與修業" },
+      body: {
+        en: "Marketing, operations, finance, human resources, technology, and strategy, with the timetable and graduation rules published by the office.",
+        zh: "行銷、營運、財務、人力資源、科技與策略，課表與修業規則由所辦公布。",
+      },
+    },
+    {
+      href: "/dual-degree",
+      title: { en: "A second master’s", zh: "跨國雙碩士" },
+      body: {
+        en: "Students who qualify can spend year two at UM-Flint, KEDGE, or IQS and earn two master’s degrees in about two years.",
+        zh: "符合資格者第二年可前往密西根大學 Flint 分校、KEDGE 或 IQS，最快約兩年取得兩個碩士學位。",
+      },
+    },
+    {
+      href: "/exchange",
+      title: { en: "Exchange without a second degree", zh: "免學費交換" },
+      body: {
+        en: "Students who do not want a dual degree can still apply for tuition-free exchange at Fu Jen’s partner universities.",
+        zh: "不讀雙碩士的同學，仍可申請輔大全球姊妹校的免學費交換。",
       },
     },
   ];
@@ -57,24 +85,32 @@ export default async function AboutPage({ params }: { params: Promise<{ lang: st
         eyebrow={{ en: "About imMBA", zh: "關於國際經管" }}
         title={{ en: "Practical management, taught for a life that crosses borders.", zh: "為跨國工作而設計的管理訓練。" }}
         lede={{
-          en: "The curriculum connects marketing, operations, finance, people, technology, and strategy, so graduates can move in an economy that is already international.",
-          zh: "課程把行銷、營運、財務、人才、科技與策略放在一起，讓畢業生能在已經國際化的經濟裡移動。",
+          en: "The curriculum covers marketing, operations, finance, human resources, technology, and strategy, taught from a global perspective.",
+          zh: "課程涵蓋行銷、營運、財務、人力資源、科技與策略，並從全球的角度來教。",
         }}
       />
       <section className="site-wrap grid gap-10 py-14 lg:grid-cols-[0.8fr_1.2fr]">
-        <div>
-          <p className="text-sm leading-relaxed text-muted-foreground">
+        <div className="space-y-4 text-sm leading-relaxed text-muted-foreground">
+          <p>
             {tx(lang, {
-              en: "In 2021 the college was selected for the Ministry of Education’s bilingual-learning program. Among 76 applicant colleges, it was the only private university college of management in greater Taipei to receive the grant.",
-              zh: "2021 年，管理學院獲教育部「大專校院學生雙語化學習計畫」核定為重點培育學院。在 76 個申請學院中，是大台北地區唯一獲補助的私立大學管理學院。",
+              en: "imMBA is practical training in business and management, with international mobility built in. Students who are not taking the dual degree can still apply for Fu Jen’s tuition-free exchange through the International Student Center.",
+              zh: "國際經管是實務取向的商管訓練，並把國際移動放進學程裡。不讀雙碩士的同學，仍可透過國際學生中心申請輔大的免學費交換。",
             })}
           </p>
-          <a
-            href="https://best-masters.com/master-international-management-ranking/far-east-asia.html"
-            className="mt-6 inline-flex text-sm underline underline-offset-4"
-          >
-            Eduniversal 2025
-          </a>
+          <p className="flex flex-col items-start gap-3">
+            <ExternalLink href="https://www.aacsb.edu/accreditation">
+              {tx(lang, { en: "AACSB accreditation", zh: "AACSB 國際商管認證" })}
+            </ExternalLink>
+            <ExternalLink href="https://best-masters.com/master-international-management-ranking/far-east-asia.html">
+              {tx(lang, { en: "Eduniversal 2025 ranking", zh: "Eduniversal 2025 排名" })}
+            </ExternalLink>
+            <TextLink href={withLang(lang, "/regulations")}>
+              {tx(lang, { en: "Program regulations", zh: "本單位規定及辦法" })}
+            </TextLink>
+            <TextLink href={withLang(lang, "/environment")}>
+              {tx(lang, { en: "Learning environment", zh: "學習環境" })}
+            </TextLink>
+          </p>
         </div>
         <div className="grid gap-4">
           {points.map((point) => (
@@ -87,13 +123,14 @@ export default async function AboutPage({ params }: { params: Promise<{ lang: st
       </section>
       <section className="border-t border-border">
         <div className="site-wrap grid gap-4 py-14 md:grid-cols-3">
-          {[
-            { href: "/environment", en: "Where you study", zh: "學習環境" },
-            { href: "/curriculum", en: "What you take", zh: "課程與修業" },
-            { href: "/admissions", en: "How you enter", zh: "如何申請" },
-          ].map((item) => (
-            <Link key={item.href} href={withLang(lang, item.href)} className="rounded-2xl bg-ink p-6 text-cream">
-              <span className="font-display text-3xl">{lang === "zh" ? item.zh : item.en}</span>
+          {paths.map((item) => (
+            <Link
+              key={item.href}
+              href={withLang(lang, item.href)}
+              className="interactive-card rounded-2xl border-border bg-cream p-6"
+            >
+              <h2 className="font-display text-3xl text-ink">{tx(lang, item.title)}</h2>
+              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{tx(lang, item.body)}</p>
             </Link>
           ))}
         </div>

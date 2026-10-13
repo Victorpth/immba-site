@@ -14,14 +14,14 @@ export function PageIntro({
 }) {
   return (
     <header className="border-b border-border bg-cream">
-      <div className="site-wrap py-14 sm:py-20">
-        <p className="text-xs font-semibold tracking-[0.22em] text-burgundy uppercase">
+      <div className="site-wrap py-10 sm:py-14">
+        <p className="text-sm font-semibold text-burgundy uppercase">
           {tx(lang, eyebrow)}
         </p>
-        <h1 className="mt-4 max-w-3xl text-4xl leading-[1.15] text-ink sm:text-5xl">
+        <h1 className="mt-3 max-w-3xl text-4xl text-ink sm:text-5xl">
           {tx(lang, title)}
         </h1>
-        <p className="mt-5 max-w-2xl text-lg leading-relaxed text-muted-foreground">
+        <p className="mt-4 max-w-2xl text-lg leading-relaxed text-[#243044]">
           {tx(lang, lede)}
         </p>
       </div>

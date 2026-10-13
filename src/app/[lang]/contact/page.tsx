@@ -1,5 +1,6 @@
 import { ContactForm } from "@/components/contact-form";
 import { PageIntro } from "@/components/page-intro";
+import { ExternalLink } from "@/components/site-links";
 import { isLang, tx } from "@/lib/i18n";
 import { pageMeta } from "@/lib/meta";
 import { notFound } from "next/navigation";
@@ -26,8 +27,8 @@ export default async function ContactPage({ params }: { params: Promise<{ lang: 
         eyebrow={{ en: "Office", zh: "所辦" }}
         title={{ en: "LM208-1. A person answers.", zh: "LM208-1，有人會回信。" }}
         lede={{
-          en: "Secretary Chang handles the office line. Use the form to open an email, or write directly.",
-          zh: "辦公室由張秘書接聽。可用表單開啟信件，或直接寫信。",
+          en: "Ms. Chang answers the office line. Use the form to open an email, or write directly.",
+          zh: "辦公室由張小姐接聽。可用表單開啟信件，或直接寫信。",
         }}
       />
       <section className="site-wrap grid gap-8 py-14 lg:grid-cols-[0.8fr_1.2fr]">
@@ -54,16 +55,16 @@ export default async function ContactPage({ params }: { params: Promise<{ lang: 
             </p>
             <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
               {tx(lang, {
-                en: "LM208-1, No. 510, Zhongzheng Rd., Xinzhuang District, New Taipei City 242062",
-                zh: "242062 新北市新莊區中正路 510 號 LM208-1",
+                en: "Office LM208-1, No. 510, Zhongzheng Rd., Xinzhuang Dist., New Taipei City 24205, Taiwan",
+                zh: "24205 新北市新莊區中正路 510 號 LM208-1",
               })}
             </p>
-            <a
-              className="mt-3 inline-flex text-sm underline underline-offset-4"
+            <ExternalLink
+              className="mt-3 text-sm text-ink"
               href="https://maps.google.com/?q=Fu+Jen+Catholic+University+510+Zhongzheng"
             >
-              {tx(lang, { en: "Map", zh: "地圖" })}
-            </a>
+              {tx(lang, { en: "Campus map", zh: "校園地圖" })}
+            </ExternalLink>
           </div>
         </aside>
         <ContactForm lang={lang} />

@@ -1,6 +1,6 @@
+import { SearchHits } from "@/components/search-hits";
 import { isLang, tx, withLang } from "@/lib/i18n";
 import { pageMeta } from "@/lib/meta";
-import { searchSite } from "@/lib/search";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -27,7 +27,6 @@ export default async function SearchPage({
   const lang = raw;
   const { q = "" } = await searchParams;
   const query = q.trim();
-  const hits = query ? searchSite(lang, query) : [];
 
   return (
     <section className="site-wrap py-14">
@@ -47,36 +46,7 @@ export default async function SearchPage({
           className="h-12 w-full max-w-xl rounded-xl border border-input bg-cream px-4 text-base outline-none focus:border-ring"
         />
       </form>
-      {query.length > 0 && query.length < 2 ? (
-        <p className="mt-8 text-sm text-muted-foreground">
-          {tx(lang, { en: "Type at least two characters.", zh: "請至少輸入兩個字。" })}
-        </p>
-      ) : null}
-      {query.length >= 2 && hits.length === 0 ? (
-        <p className="mt-8 rounded-2xl border border-dashed border-border px-6 py-12 text-sm text-muted-foreground">
-          {tx(lang, {
-            en: "Nothing matched. Try admissions, KEDGE, thesis, or a course name.",
-            zh: "沒有相符的結果。可以試試招生、KEDGE、論文或課程名稱。",
-          })}
-        </p>
-      ) : null}
-      {hits.length > 0 ? (
-        <ul className="mt-8 divide-y divide-border rounded-2xl border border-border bg-cream">
-          {hits.map((hit) => {
-            const external = hit.href.startsWith("http");
-            const href = external ? hit.href : withLang(lang, hit.href);
-            return (
-              <li key={`${hit.kind}-${hit.href}-${hit.title}`}>
-                <a href={href} className="block px-5 py-4 hover:bg-muted/60">
-                  <span className="text-[11px] font-semibold tracking-[0.14em] text-burgundy uppercase">{hit.kind}</span>
-                  <span className="mt-1 block font-medium text-ink">{hit.title}</span>
-                  <span className="mt-1 block text-sm text-muted-foreground">{hit.excerpt}</span>
-                </a>
-              </li>
-            );
-          })}
-        </ul>
-      ) : null}
+      <SearchHits lang={lang} query={query} />
       {!query ? (
         <div className="mt-10 flex flex-wrap gap-2 text-sm">
           {[
@@ -85,7 +55,11 @@ export default async function SearchPage({
             { href: "/faculty", en: "Faculty", zh: "師資" },
             { href: "/downloads", en: "Downloads", zh: "下載" },
           ].map((item) => (
-            <Link key={item.href} href={withLang(lang, item.href)} className="rounded-full bg-muted px-3 py-1.5">
+            <Link
+              key={item.href}
+              href={withLang(lang, item.href)}
+              className="text-ink underline decoration-[#c5d0dc] underline-offset-4 hover:text-[#1d4f86]"
+            >
               {lang === "zh" ? item.zh : item.en}
             </Link>
           ))}

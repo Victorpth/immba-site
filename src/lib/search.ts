@@ -1,3 +1,4 @@
+import { announcements, type Announcement } from "@/content/announcements";
 import { documents } from "@/content/documents";
 import { faculty } from "@/content/faculty";
 import { searchablePages } from "@/content/nav";
@@ -15,7 +16,7 @@ function hit(query: string, haystack: string) {
   return haystack.toLowerCase().includes(query.toLowerCase());
 }
 
-export function searchSite(lang: Lang, raw: string): SearchHit[] {
+export function searchSite(lang: Lang, raw: string, noticeItems: Announcement[] = announcements): SearchHit[] {
   const query = raw.trim();
   if (query.length < 2) return [];
   const kind = {
@@ -32,6 +33,19 @@ export function searchSite(lang: Lang, raw: string): SearchHit[] {
       title: page.label[lang],
       kind: kind.page,
       excerpt: page.description[lang],
+    }));
+
+  const notices: SearchHit[] = noticeItems
+    .filter(
+      (item) =>
+        item.status === "published" &&
+        hit(query, `${item.title.en} ${item.title.zh} ${item.content.en} ${item.content.zh}`),
+    )
+    .map((item) => ({
+      href: item.linkUrl || "/news",
+      title: item.title[lang] || item.title.en || item.title.zh,
+      kind: kind.news,
+      excerpt: item.content[lang] || item.date,
     }));
 
   const stories: SearchHit[] = news
@@ -70,10 +84,10 @@ export function searchSite(lang: Lang, raw: string): SearchHit[] {
     )
     .map((doc) => ({
       href: doc.href,
-      title: doc.title[lang],
+      title: doc.kind === "Web" ? doc.title[lang] : `${doc.title[lang]} (${doc.kind})`,
       kind: kind.file,
       excerpt: doc.note[lang],
     }));
 
-  return [...pages, ...stories, ...people, ...files].slice(0, 24);
+  return [...pages, ...notices, ...stories, ...people, ...files].slice(0, 24);
 }

@@ -1,7 +1,7 @@
 import { PageIntro } from "@/components/page-intro";
+import { ActionLink, TextLink } from "@/components/site-links";
 import { isLang, tx, withLang } from "@/lib/i18n";
 import { pageMeta } from "@/lib/meta";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
 const title = { en: "Books and materials", zh: "書籍與教材市集" };
@@ -64,19 +64,11 @@ export default async function MarketplacePage({ params }: { params: Promise<{ la
         ))}
       </section>
       <section className="site-wrap pb-16">
-        <div className="flex flex-wrap gap-3">
-          <Link
-            href={withLang(lang, "/curriculum")}
-            className="inline-flex h-11 items-center rounded-lg bg-primary px-5 text-sm text-primary-foreground"
-          >
-            {tx(lang, { en: "See the curriculum", zh: "查看課程" })}
-          </Link>
-          <a
-            href="mailto:imMBA@mail.fju.edu.tw"
-            className="inline-flex h-11 items-center rounded-lg border border-border bg-cream px-5 text-sm"
-          >
-            imMBA@mail.fju.edu.tw
-          </a>
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
+          <TextLink href={withLang(lang, "/curriculum")}>
+            {tx(lang, { en: "Read the curriculum", zh: "閱讀課程與修業" })}
+          </TextLink>
+          <ActionLink href={withLang(lang, "/contact")}>{tx(lang, { en: "Contact Us", zh: "聯絡我們" })}</ActionLink>
         </div>
       </section>
     </>

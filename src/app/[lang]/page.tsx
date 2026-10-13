@@ -1,10 +1,8 @@
-import { CycleStatus } from "@/components/cycle-status";
-import { NewsCard } from "@/components/news-card";
-import { cycles } from "@/content/cycles";
-import { news } from "@/content/news";
+import { PublicAnnouncements } from "@/components/public-announcements";
+import { ActionLink, AnnouncementSource, TextLink } from "@/components/site-links";
+import { primaryMenu } from "@/content/nav";
 import { isLang, tx, withLang } from "@/lib/i18n";
 import { pageMeta } from "@/lib/meta";
-import { ArrowUpRight } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -59,11 +57,12 @@ const pillars = [
   },
 ];
 
+const menuGroups = primaryMenu.filter((item) => item.children && item.children.length > 0);
+
 export default async function HomePage({ params }: { params: Promise<{ lang: string }> }) {
   const { lang: raw } = await params;
   if (!isLang(raw)) notFound();
   const lang = raw;
-  const latest = [...news].sort((a, b) => (a.date < b.date ? 1 : -1)).slice(0, 4);
 
   return (
     <>
@@ -74,71 +73,49 @@ export default async function HomePage({ params }: { params: Promise<{ lang: str
         >
           WITH imMBA
         </p>
-        <div className="site-wrap grid items-end gap-12 py-16 lg:grid-cols-[1.15fr_0.85fr] lg:py-24">
-          <div>
-            <p className="text-xs font-semibold tracking-[0.22em] text-burgundy uppercase">
-              {tx(lang, { en: "New Taipei City · Taught in English", zh: "新北市 · 全英語授課" })}
-            </p>
-            <h1 className="mt-5 max-w-2xl text-4xl leading-[1.08] text-ink sm:text-5xl lg:text-6xl">
-              {tx(lang, {
-                en: "An MBA built for careers that cross borders.",
-                zh: "為跨境職涯而設的 MBA。",
-              })}
-            </h1>
-            <p className="mt-6 max-w-xl text-lg leading-snug font-medium text-ink">
-              {tx(lang, {
-                en: "Fu Jen’s International MBA is taught entirely in English and accredited by AACSB. You learn management with people who did not grow up in the same country.",
-                zh: "輔大國際經營管理碩士班全英語授課，並通過 AACSB 認證。你和來自不同國家的人一起學管理。",
-              })}
-            </p>
-            <p className="mt-4 max-w-xl text-base leading-relaxed text-muted-foreground">
-              {tx(lang, {
-                en: "You study with classmates from more than 30 countries, and you can earn a second master’s in the United States, France, or Spain.",
-                zh: "同學來自三十多個國家；也可以在美國、法國或西班牙再取得一個碩士。",
-              })}
-            </p>
-            <div className="mt-8 flex flex-wrap items-center gap-3">
-              <Link
-                href={withLang(lang, "/admissions")}
-                className="inline-flex h-12 items-center rounded-full bg-primary px-6 text-base font-semibold text-primary-foreground"
-              >
-                {tx(lang, { en: "Apply Now", zh: "立即報名" })}
-              </Link>
-              <Link
-                href={withLang(lang, "/marketplace")}
-                className="inline-flex h-11 items-center rounded-full border border-border bg-cream px-5 text-sm font-medium text-ink"
-              >
-                {tx(lang, { en: "Books & materials marketplace", zh: "書籍與教材市集" })}
-              </Link>
-            </div>
+        <div className="site-wrap py-16 lg:py-24">
+          <p className="text-xs font-semibold tracking-[0.22em] text-burgundy uppercase">
+            {tx(lang, { en: "New Taipei City · Taught in English", zh: "新北市 · 全英語授課" })}
+          </p>
+          <h1 className="mt-4 max-w-3xl text-4xl text-ink sm:text-5xl lg:text-6xl">
+            {tx(lang, {
+              en: "An MBA built for careers that cross borders.",
+              zh: "為跨境職涯而設的 MBA。",
+            })}
+          </h1>
+          <p className="mt-5 max-w-2xl text-xl leading-relaxed text-ink">
+            {tx(lang, {
+              en: "Fu Jen’s International MBA is taught entirely in English and accredited by AACSB. You learn management with people who did not grow up in the same country.",
+              zh: "輔大國際經營管理碩士班全英語授課，並通過 AACSB 認證。你和來自不同國家的人一起學管理。",
+            })}
+          </p>
+          <p className="mt-3 max-w-2xl text-lg leading-relaxed text-[#243044]">
+            {tx(lang, {
+              en: "You study with classmates from more than 30 countries, and you can earn a second master’s in the United States, France, or Spain.",
+              zh: "同學來自三十多個國家；也可以在美國、法國或西班牙再取得一個碩士。",
+            })}
+          </p>
+          <div className="mt-8 flex flex-wrap items-center gap-x-5 gap-y-3">
+            <ActionLink href={withLang(lang, "/admissions")}>
+              {tx(lang, { en: "Apply Now", zh: "立即報名" })}
+            </ActionLink>
+            <TextLink href={withLang(lang, "/marketplace")}>
+              {tx(lang, { en: "Books and materials marketplace", zh: "書籍與教材市集" })}
+            </TextLink>
           </div>
-          <div className="grid gap-3">
-            {cycles.map((cycle) => (
-              <Link
-                key={cycle.id}
-                href={withLang(lang, cycle.href)}
-                className="rounded-2xl border border-border bg-cream p-5 transition hover:-translate-y-0.5 hover:border-burgundy/40"
-              >
-                <div className="flex items-center justify-between gap-3">
-                  <p className="text-sm font-medium text-ink">{tx(lang, cycle.title)}</p>
-                  <CycleStatus cycle={cycle} lang={lang} />
+          <div className="mt-8">
+            <p className="text-xs font-semibold tracking-[0.18em] text-burgundy uppercase">
+              {tx(lang, { en: "The program in numbers", zh: "學程一覽" })}
+            </p>
+            <div className="mt-4 grid grid-cols-2 gap-x-6 gap-y-6 sm:grid-cols-4">
+              {facts.map((fact) => (
+                <div key={fact.en}>
+                  <p className="font-display text-4xl text-ink">{tx(lang, { en: fact.en, zh: fact.zh })}</p>
+                  <p className="mt-2 text-sm text-muted-foreground">{tx(lang, fact.note)}</p>
                 </div>
-                <p className="mt-3 font-display text-2xl text-ink">{tx(lang, cycle.window)}</p>
-                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{tx(lang, cycle.detail)}</p>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="ink-panel">
-        <div className="site-wrap grid grid-cols-2 gap-8 py-10 lg:grid-cols-4">
-          {facts.map((fact) => (
-            <div key={fact.en}>
-              <p className="font-display text-4xl text-cream">{tx(lang, { en: fact.en, zh: fact.zh })}</p>
-              <p className="mt-2 text-sm text-cream/70">{tx(lang, fact.note)}</p>
+              ))}
             </div>
-          ))}
+          </div>
         </div>
       </section>
 
@@ -152,16 +129,16 @@ export default async function HomePage({ params }: { params: Promise<{ lang: str
               {tx(lang, { en: "What two years here are for", zh: "這兩年用來做什麼" })}
             </h2>
           </div>
-          <Link href={withLang(lang, "/about")} className="hidden text-sm underline underline-offset-4 sm:inline">
-            {tx(lang, { en: "Overview", zh: "特色與排名" })}
-          </Link>
+          <TextLink href={withLang(lang, "/about")} className="hidden sm:inline">
+            {tx(lang, { en: "Overview and ranking", zh: "特色與排名" })}
+          </TextLink>
         </div>
         <div className="mt-8 grid gap-4 md:grid-cols-2">
           {pillars.map((pillar, index) => (
             <Link
               key={pillar.href}
               href={withLang(lang, pillar.href)}
-              className="group rounded-2xl border border-border bg-cream p-6"
+              className="interactive-card group rounded-2xl border-border bg-cream p-6"
             >
               <p className="text-xs text-gold">0{index + 1}</p>
               <h3 className="mt-3 text-2xl text-ink group-hover:text-burgundy">
@@ -177,63 +154,92 @@ export default async function HomePage({ params }: { params: Promise<{ lang: str
 
       <section className="border-y border-border bg-cream/60">
         <div className="site-wrap py-16 sm:py-20">
-          <div className="flex items-end justify-between gap-4">
-            <h2 className="text-4xl text-ink">{tx(lang, { en: "Latest from the office", zh: "所辦最新消息" })}</h2>
-            <Link href={withLang(lang, "/news")} className="text-sm underline underline-offset-4">
-              {tx(lang, { en: "All news", zh: "全部公告" })}
-            </Link>
-          </div>
-          <div className="mt-8 grid gap-4 lg:grid-cols-2">
-            {latest.map((item) => (
-              <NewsCard key={item.slug} item={item} lang={lang} />
+          <p className="text-xs font-semibold tracking-[0.2em] text-burgundy uppercase">
+            {tx(lang, { en: "On this site", zh: "本站導覽" })}
+          </p>
+          <h2 className="mt-3 text-4xl text-ink">{tx(lang, { en: "About, admissions, and courses", zh: "關於、招生與課程" })}</h2>
+          <div className="mt-10 space-y-10">
+            {menuGroups.map((group) => (
+              <div key={group.href}>
+                <h3 className="text-sm font-semibold tracking-[0.16em] text-burgundy uppercase">{tx(lang, group.label)}</h3>
+                <div className="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  {group.children?.map((child) => (
+                    <Link
+                      key={child.href}
+                      href={withLang(lang, child.href)}
+                      className="interactive-card rounded-2xl border-border bg-cream p-5"
+                    >
+                      <p className="text-lg text-ink">{tx(lang, child.label)}</p>
+                      <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{tx(lang, child.description)}</p>
+                    </Link>
+                  ))}
+                </div>
+              </div>
             ))}
           </div>
         </div>
       </section>
 
       <section className="site-wrap py-16 sm:py-20">
-        <p className="text-xs font-semibold tracking-[0.2em] text-burgundy uppercase">
-          {tx(lang, { en: "Second year abroad", zh: "第二年在國外" })}
-        </p>
-        <h2 className="mt-3 max-w-xl text-4xl text-ink">
-          {tx(lang, { en: "Three schools. One extra degree.", zh: "三所學校，一個額外的碩士。" })}
-        </h2>
-        <div className="mt-8 grid gap-4 lg:grid-cols-3">
-          {[
-            {
-              city: { en: "Flint, USA", zh: "美國 Flint" },
-              school: "University of Michigan–Flint",
-              degree: "MBA",
-              note: { en: "In-state tuition for imMBA students.", zh: "國際經管學生適用州內學費。" },
-            },
-            {
-              city: { en: "Bordeaux or Marseille", zh: "波爾多或馬賽" },
-              school: "KEDGE Business School",
-              degree: "Master in Management",
-              note: { en: "Study at KEDGE without KEDGE tuition.", zh: "在 KEDGE 就讀免收該校學費。" },
-            },
-            {
-              city: { en: "Barcelona", zh: "巴塞隆納" },
-              school: "IQS School of Management",
-              degree: "MIMDE · MIBM",
-              note: { en: "A tuition discount under the agreement.", zh: "依合約享有學費優惠。" },
-            },
-          ].map((partner) => (
-            <Link
-              key={partner.school}
-              href={withLang(lang, "/dual-degree")}
-              className="flex h-full flex-col rounded-2xl bg-ink p-6 text-cream"
-            >
-              <p className="text-xs tracking-[0.16em] text-gold uppercase">{tx(lang, partner.city)}</p>
-              <h3 className="mt-4 text-2xl text-cream">{partner.school}</h3>
-              <p className="mt-2 text-sm text-cream/70">{partner.degree}</p>
-              <p className="mt-6 text-sm leading-relaxed text-cream/80">{tx(lang, partner.note)}</p>
-              <span className="mt-6 inline-flex items-center gap-1 text-sm text-gold">
-                {tx(lang, { en: "Pathway", zh: "路徑說明" })}
-                <ArrowUpRight className="size-4" />
-              </span>
-            </Link>
-          ))}
+        <div className="flex items-end justify-between gap-4">
+          <div>
+            <p className="text-xs font-semibold tracking-[0.2em] text-burgundy uppercase">
+              {tx(lang, { en: "Announcements", zh: "公告" })}
+            </p>
+            <h2 className="mt-3 text-4xl text-ink">{tx(lang, { en: "Latest from the office", zh: "所辦最新消息" })}</h2>
+          </div>
+          <TextLink href={withLang(lang, "/news")}>{tx(lang, { en: "All announcements", zh: "全部公告" })}</TextLink>
+        </div>
+        <div className="mt-8">
+          <PublicAnnouncements lang={lang} />
+        </div>
+        <div className="mt-8">
+          <AnnouncementSource lang={lang} />
+        </div>
+      </section>
+
+      <section className="border-t border-border bg-cream/40">
+        <div className="site-wrap py-16 sm:py-20">
+          <p className="text-xs font-semibold tracking-[0.2em] text-burgundy uppercase">
+            {tx(lang, { en: "Second year abroad", zh: "第二年在國外" })}
+          </p>
+          <h2 className="mt-3 max-w-xl text-4xl text-ink">
+            {tx(lang, { en: "Three schools. One extra degree.", zh: "三所學校，一個額外的碩士。" })}
+          </h2>
+          <div className="mt-8 grid gap-4 lg:grid-cols-3">
+            {[
+              {
+                city: { en: "Flint, USA", zh: "美國 Flint" },
+                school: "University of Michigan–Flint",
+                degree: "MBA",
+                note: { en: "In-state tuition for imMBA students.", zh: "國際經管學生適用州內學費。" },
+              },
+              {
+                city: { en: "Bordeaux or Marseille", zh: "波爾多或馬賽" },
+                school: "KEDGE Business School",
+                degree: "Master in Management",
+                note: { en: "Study at KEDGE without KEDGE tuition.", zh: "在 KEDGE 就讀免收該校學費。" },
+              },
+              {
+                city: { en: "Barcelona", zh: "巴塞隆納" },
+                school: "IQS School of Management",
+                degree: "MIMDE · MIBM",
+                note: { en: "A tuition discount under the agreement.", zh: "依合約享有學費優惠。" },
+              },
+            ].map((partner) => (
+              <Link
+                key={partner.school}
+                href={withLang(lang, "/dual-degree")}
+                className="interactive-card flex h-full flex-col rounded-2xl border-white/15 bg-ink p-6 text-cream"
+              >
+                <p className="text-xs tracking-[0.16em] text-gold uppercase">{tx(lang, partner.city)}</p>
+                <h3 className="mt-4 text-2xl text-cream">{partner.school}</h3>
+                <p className="mt-2 text-base text-cream">{partner.degree}</p>
+                <p className="mt-6 text-base leading-relaxed text-cream/90">{tx(lang, partner.note)}</p>
+                <span className="mt-6 text-sm text-gold">{tx(lang, { en: "Read the pathway", zh: "閱讀路徑說明" })}</span>
+              </Link>
+            ))}
+          </div>
         </div>
       </section>
     </>

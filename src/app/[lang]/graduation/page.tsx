@@ -26,18 +26,18 @@ export default async function GraduationPage({ params }: { params: Promise<{ lan
         eyebrow={{ en: "Graduation", zh: "畢業" }}
         title={{ en: "The defense has a date. The paperwork starts earlier.", zh: "口試有截止日，文件要更早開始。" }}
         lede={{
-          en: "You may apply for the defense in any semester once you meet the rules for your cohort. Fall defenses close on 31 January. Spring defenses close on 31 July. The university calendar can move the exact day.",
-          zh: "符合該屆修業規則後，每個學期都可以申請口試。秋季口試截止日為 1 月 31 日，春季為 7 月 31 日。實際日期配合當年度輔大行事曆。",
+          en: "Read the graduation rules for the term you entered. The office releases the thesis-advisor list in late March and in September. In the semester you plan to defend, enroll in Thesis before add-and-drop ends.",
+          zh: "請閱讀自己入學學期的修業規則。所辦約在三月下旬與九月公布論文指導老師名單。擬口試的那個學期，須在加退選結束前加選「論文」。",
         }}
       />
       <section className="site-wrap grid gap-4 py-14 lg:grid-cols-3">
         {[
           {
             step: "01",
-            title: { en: "Meet your cohort rules", zh: "先符合修業規則" },
+            title: { en: "Read your entry-year file", zh: "先讀自己那一屆" },
             body: {
-              en: "Core courses, electives, the thesis, and the English threshold are all specified. The 42-credit minimum includes 6 thesis credits.",
-              zh: "專業必修、選修、論文與英文門檻都有規定。最低 42 學分，含論文 6 學分。",
+              en: "The office publishes a separate file for students who entered in fall 2025, 2024, 2023, 2021, 2018, 2017, or 2014.",
+              zh: "所辦分別公布 2025、2024、2023、2021、2018、2017 與 2014 年秋季入學適用的修業規則。",
             },
           },
           {
@@ -50,10 +50,10 @@ export default async function GraduationPage({ params }: { params: Promise<{ lan
           },
           {
             step: "03",
-            title: { en: "Follow the process file", zh: "依流程提前辦理" },
+            title: { en: "Use the office forms", zh: "使用所辦表格" },
             body: {
-              en: "Work before and after the defense needs time. Use the steps published by the office, then the library deposit.",
-              zh: "口試前後都有作業時間。請依所辦公布的流程，並完成圖書館論文程序。",
+              en: "The process file, the library thesis guide, the thesis format, the defense agreement, and the acceptance form are listed below.",
+              zh: "口試與畢業流程、圖書館論文資源、論文格式、口試同意書與修改完成證明都列在下方。",
             },
           },
         ].map((item) => (

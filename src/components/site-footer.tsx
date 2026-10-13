@@ -1,6 +1,7 @@
 import { LogoMark } from "@/components/logo-mark";
 import { navGroups, utilityLinks } from "@/content/nav";
 import { tx, withLang, type Lang } from "@/lib/i18n";
+import { ArrowUpRight } from "lucide-react";
 import Link from "next/link";
 
 export function SiteFooter({ lang }: { lang: Lang }) {
@@ -12,13 +13,13 @@ export function SiteFooter({ lang }: { lang: Lang }) {
             <LogoMark className="size-20 object-contain" />
             <p className="font-display text-3xl leading-none">imMBA</p>
           </Link>
-          <p className="mt-3 max-w-xs text-sm leading-relaxed text-cream/70">
+          <p className="mt-3 max-w-xs text-base leading-relaxed text-cream/90">
             {tx(lang, {
               en: "MBA in International Management, College of Management, Fu Jen Catholic University.",
               zh: "輔仁大學管理學院國際經營管理碩士班。",
             })}
           </p>
-          <address className="mt-5 text-sm leading-relaxed text-cream/80 not-italic">
+          <address className="mt-5 text-base leading-relaxed text-cream not-italic">
             {tx(lang, {
               en: "LM208-1, No. 510, Zhongzheng Rd., Xinzhuang Dist., New Taipei City 242062, Taiwan",
               zh: "242062 新北市新莊區中正路 510 號 LM208-1",
@@ -35,10 +36,10 @@ export function SiteFooter({ lang }: { lang: Lang }) {
         </div>
         {navGroups.slice(0, 2).map((group) => (
           <div key={group.href}>
-            <p className="text-xs font-semibold tracking-[0.18em] text-gold uppercase">
+            <p className="text-sm font-semibold text-gold uppercase">
               {tx(lang, group.label)}
             </p>
-            <ul className="mt-3 space-y-2 text-sm text-cream/80">
+            <ul className="mt-3 space-y-2 text-base text-cream">
               {group.links.map((link) => (
                 <li key={link.href}>
                   <Link href={withLang(lang, link.href)} className="hover:text-cream">
@@ -50,10 +51,10 @@ export function SiteFooter({ lang }: { lang: Lang }) {
           </div>
         ))}
         <div>
-          <p className="text-xs font-semibold tracking-[0.18em] text-gold uppercase">
+          <p className="text-sm font-semibold text-gold uppercase">
             {tx(lang, { en: "More", zh: "更多" })}
           </p>
-          <ul className="mt-3 space-y-2 text-sm text-cream/80">
+          <ul className="mt-3 space-y-2 text-base text-cream">
             {[...navGroups[2].links, ...navGroups[3].links, ...utilityLinks].map((link) => (
               <li key={link.href}>
                 <Link href={withLang(lang, link.href)} className="hover:text-cream">
@@ -62,20 +63,32 @@ export function SiteFooter({ lang }: { lang: Lang }) {
               </li>
             ))}
             <li>
-              <a className="hover:text-cream" href="https://www.management.fju.edu.tw/">
+              <a
+                className="inline-flex items-center gap-1 hover:text-cream"
+                href="https://www.management.fju.edu.tw/"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 {tx(lang, { en: "College of Management", zh: "輔大管理學院" })}
+                <ArrowUpRight className="size-3.5" aria-hidden="true" />
               </a>
             </li>
             <li>
-              <a className="hover:text-cream" href="https://www.fju.edu.tw/">
+              <a
+                className="inline-flex items-center gap-1 hover:text-cream"
+                href="https://www.fju.edu.tw/"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 {tx(lang, { en: "Fu Jen Catholic University", zh: "輔仁大學" })}
+                <ArrowUpRight className="size-3.5" aria-hidden="true" />
               </a>
             </li>
           </ul>
         </div>
       </div>
       <div className="border-t border-white/10">
-        <div className="site-wrap flex flex-col gap-2 py-5 text-xs leading-relaxed text-cream/55 sm:flex-row sm:items-center sm:justify-between">
+        <div className="site-wrap flex flex-col gap-2 py-5 text-sm leading-relaxed text-cream/90 sm:flex-row sm:items-center sm:justify-between">
           <p>© {new Date().getFullYear()} College of Management, Fu Jen Catholic University</p>
           <p>
             {tx(lang, {

@@ -1,8 +1,8 @@
+import { ExternalLink, ResourceLink, TextLink, fileKind } from "@/components/site-links";
 import { categoryLabel, getNews, news } from "@/content/news";
 import { formatDate, isLang, tx, withLang } from "@/lib/i18n";
 import { pageMeta } from "@/lib/meta";
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
 export function generateStaticParams() {
@@ -51,13 +51,19 @@ export default async function NewsDetailPage({
           {item.links && item.links.length > 0 ? (
             <ul className="space-y-2 pt-2">
               {item.links.map((link) => {
+                const label = tx(lang, link.label);
                 const external = link.href.startsWith("http");
-                const href = external ? link.href : withLang(lang, link.href);
                 return (
                   <li key={link.href}>
-                    <a href={href} className="text-burgundy underline underline-offset-4">
-                      {tx(lang, link.label)}
-                    </a>
+                    {fileKind(link.href) ? (
+                      <ResourceLink href={link.href}>{label}</ResourceLink>
+                    ) : external ? (
+                      <ExternalLink href={link.href} className="text-burgundy">
+                        {label}
+                      </ExternalLink>
+                    ) : (
+                      <TextLink href={withLang(lang, link.href)}>{label}</TextLink>
+                    )}
                   </li>
                 );
               })}
@@ -71,15 +77,15 @@ export default async function NewsDetailPage({
           <ul className="mt-3 space-y-3">
             {related.map((story) => (
               <li key={story.slug}>
-                <Link href={withLang(lang, `/news/${story.slug}`)} className="text-sm leading-relaxed hover:text-burgundy">
+                <TextLink href={withLang(lang, `/news/${story.slug}`)} className="text-sm">
                   {tx(lang, story.title)}
-                </Link>
+                </TextLink>
               </li>
             ))}
           </ul>
-          <Link href={withLang(lang, "/news")} className="mt-6 inline-flex text-sm underline underline-offset-4">
-            {tx(lang, { en: "All news", zh: "全部公告" })}
-          </Link>
+          <TextLink href={withLang(lang, "/news")} className="mt-6 text-sm">
+            {tx(lang, { en: "All announcements", zh: "全部公告" })}
+          </TextLink>
         </aside>
       </div>
     </article>
