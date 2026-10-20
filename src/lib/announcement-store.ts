@@ -10,6 +10,7 @@ function cloneSeed(): Announcement[] {
     ...item,
     title: { ...item.title },
     content: { ...item.content },
+    imageUrl: item.imageUrl ?? "",
     sync: item.sync ? { ...item.sync } : null,
   }));
 }
@@ -28,7 +29,8 @@ function isAnnouncement(value: unknown): value is Announcement {
     typeof item.title.zh === "string" &&
     !!item.content &&
     typeof item.content.en === "string" &&
-    typeof item.content.zh === "string"
+    typeof item.content.zh === "string" &&
+    (item.imageUrl === undefined || typeof item.imageUrl === "string")
   );
 }
 

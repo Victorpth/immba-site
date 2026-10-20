@@ -12,7 +12,7 @@ import {
 import { useAnnouncements, writeAnnouncements } from "@/lib/announcement-store";
 import { formatDate, tx, withLang, type Lang } from "@/lib/i18n";
 import { translateTexts } from "@/lib/translate-client";
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";
 
 const fieldClass =
   "mt-2 w-full rounded-xl border border-input bg-white px-3 py-2 text-sm text-ink outline-none focus:border-burgundy";
@@ -21,6 +21,35 @@ type Locks = Record<Lang, { title: boolean; content: boolean }>;
 
 function other(lang: Lang): Lang {
   return lang === "en" ? "zh" : "en";
+}
+
+function compressPhoto(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("read"));
+    reader.onload = () => {
+      const image = new Image();
+      image.onerror = () => reject(new Error("decode"));
+      image.onload = () => {
+        const maxEdge = 1200;
+        const scale = Math.min(1, maxEdge / Math.max(image.width, image.height));
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.max(1, Math.round(image.width * scale));
+        canvas.height = Math.max(1, Math.round(image.height * scale));
+        const context = canvas.getContext("2d");
+        if (!context) {
+          reject(new Error("canvas"));
+          return;
+        }
+        context.fillStyle = "#ffffff";
+        context.fillRect(0, 0, canvas.width, canvas.height);
+        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL("image/jpeg", 0.82));
+      };
+      image.src = String(reader.result);
+    };
+    reader.readAsDataURL(file);
+  });
 }
 
 function SyncNote({ item, lang }: { item: Pick<Announcement, "title" | "content" | "sync">; lang: Lang }) {
@@ -142,6 +171,36 @@ function AnnouncementEditor({
     return () => window.clearTimeout(timer);
   }, [tick]);
 
+  async function onPhoto(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      setError(tx(lang, { en: "Choose an image file.", zh: "請選擇圖片檔案。" }));
+      return;
+    }
+    if (file.size > 8 * 1024 * 1024) {
+      setError(tx(lang, { en: "This photo is too large. Choose one under 8 MB.", zh: "照片太大，請選擇 8 MB 以下的檔案。" }));
+      return;
+    }
+    try {
+      const imageUrl = await compressPhoto(file);
+      if (imageUrl.length > 700_000) {
+        setError(
+          tx(lang, {
+            en: "This photo is still too large to store. Choose a smaller one.",
+            zh: "這張照片壓縮後仍然太大，請改用較小的照片。",
+          }),
+        );
+        return;
+      }
+      setDraft((item) => ({ ...item, imageUrl }));
+      setError("");
+    } catch {
+      setError(tx(lang, { en: "This photo could not be read. Try a JPEG or PNG.", zh: "無法讀取這張照片，請改用 JPEG 或 PNG。" }));
+    }
+  }
+
   function setText(language: Lang, field: "title" | "content", value: string) {
     setDraft((item) => ({ ...item, [field]: { ...item[field], [language]: value } }));
     setManual((current) => ({
@@ -259,6 +318,28 @@ function AnnouncementEditor({
             <option value="draft">{tx(lang, { en: "Draft", zh: "草稿" })}</option>
           </select>
         </label>
+      </div>
+
+      <div className="mt-6">
+        <label className="block text-sm font-semibold text-ink">
+          {tx(lang, { en: "Photo", zh: "照片" })}
+          <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={onPhoto} className={`${fieldClass} file:mr-3 file:rounded-full file:border-0 file:bg-paper file:px-3 file:py-1 file:text-sm file:font-semibold file:text-ink`} />
+          <span className="mt-1 block text-xs font-normal text-muted-foreground">
+            {tx(lang, { en: "Optional. The photo appears on this announcement.", zh: "選填。照片會顯示在這則公告上。" })}
+          </span>
+        </label>
+        {draft.imageUrl ? (
+          <div className="mt-3 flex flex-wrap items-center gap-4">
+            <img src={draft.imageUrl} alt="" className="h-28 w-44 rounded-xl object-cover" />
+            <button
+              type="button"
+              onClick={() => setDraft((item) => ({ ...item, imageUrl: "" }))}
+              className="text-sm font-semibold text-ink underline decoration-[#c5d0dc] underline-offset-4 hover:text-[#1d4f86]"
+            >
+              {tx(lang, { en: "Remove photo", zh: "移除照片" })}
+            </button>
+          </div>
+        ) : null}
       </div>
 
       <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-3 rounded-xl bg-paper px-4 py-3">
@@ -418,6 +499,7 @@ export function AdminNewsManager({ lang }: { lang: Lang }) {
       id: crypto.randomUUID(),
       date: new Date().toISOString().slice(0, 10),
       linkUrl: "",
+      imageUrl: "",
       order: nextOrder,
       status: "draft",
       title: { en: "", zh: "" },
@@ -440,7 +522,17 @@ export function AdminNewsManager({ lang }: { lang: Lang }) {
     const next = items.some((current) => current.id === item.id)
       ? items.map((current) => (current.id === item.id ? item : current))
       : [...items, item];
-    writeAnnouncements(next);
+    try {
+      writeAnnouncements(next);
+    } catch {
+      setNotice(
+        tx(lang, {
+          en: "The announcement could not be saved. The photo may be too large for this browser.",
+          zh: "公告無法儲存。照片可能太大，超過這個瀏覽器的容量。",
+        }),
+      );
+      return;
+    }
     setDraft(null);
     setNotice(tx(lang, { en: "Saved. Both languages are stored as one announcement.", zh: "已儲存。中文與英文存在同一則公告。" }));
   }
@@ -511,6 +603,7 @@ export function AdminNewsManager({ lang }: { lang: Lang }) {
                 <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
                   {item.title.en || tx(lang, { en: "No English title", zh: "尚未填寫英文標題" })}
                 </p>
+                {item.imageUrl ? <img src={item.imageUrl} alt="" className="mt-3 h-16 w-24 rounded-lg object-cover" /> : null}
               </div>
               <div className="flex gap-4">
                 <button

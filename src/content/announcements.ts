@@ -22,6 +22,8 @@ export type Announcement = {
   status: AnnouncementStatus;
   title: Bi;
   content: Bi;
+  /** Optional photo, stored with the announcement. Older records omit it. */
+  imageUrl?: string;
   sync: AnnouncementSync | null;
 };
 

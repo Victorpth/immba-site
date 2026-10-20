@@ -10,6 +10,13 @@ export function AnnouncementCard({ item, lang }: { item: Announcement; lang: Lan
       <p className="shrink-0 text-sm text-muted-foreground sm:w-36">
         <time dateTime={item.date}>{formatDate(lang, item.date)}</time>
       </p>
+      {item.imageUrl ? (
+        <img
+          src={item.imageUrl}
+          alt=""
+          className="h-28 w-44 shrink-0 rounded-xl object-cover"
+        />
+      ) : null}
       <div className="min-w-0 flex-1">
         <h3 className="text-xl text-ink">{tx(lang, item.title)}</h3>
         {content ? <p className="mt-1 text-sm leading-relaxed whitespace-pre-wrap text-muted-foreground">{content}</p> : null}
