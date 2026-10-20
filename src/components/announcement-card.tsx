@@ -6,19 +6,21 @@ export function AnnouncementCard({ item, lang }: { item: Announcement; lang: Lan
   const content = tx(lang, item.content);
   const external = item.linkUrl.startsWith("http");
   return (
-    <article className="interactive-card flex h-full flex-col rounded-2xl border-border bg-cream p-5">
-      <p className="text-xs text-muted-foreground">
+    <article className="interactive-card flex w-full flex-col gap-3 rounded-2xl border-border bg-cream p-5 sm:flex-row sm:items-center sm:gap-6">
+      <p className="shrink-0 text-sm text-muted-foreground sm:w-36">
         <time dateTime={item.date}>{formatDate(lang, item.date)}</time>
       </p>
-      <h3 className="mt-2 text-2xl text-ink">{tx(lang, item.title)}</h3>
-      {content ? <p className="mt-3 text-sm leading-relaxed whitespace-pre-wrap text-muted-foreground">{content}</p> : null}
+      <div className="min-w-0 flex-1">
+        <h3 className="text-xl text-ink">{tx(lang, item.title)}</h3>
+        {content ? <p className="mt-1 text-sm leading-relaxed whitespace-pre-wrap text-muted-foreground">{content}</p> : null}
+      </div>
       {item.linkUrl ? (
         external ? (
-          <ExternalLink href={item.linkUrl} className="mt-auto pt-4 text-sm font-medium text-[#1d4f86]">
+          <ExternalLink href={item.linkUrl} className="shrink-0 text-sm font-medium text-[#1d4f86]">
             {tx(lang, { en: "View Details", zh: "查看詳情" })}
           </ExternalLink>
         ) : (
-          <TextLink href={withLang(lang, item.linkUrl)} className="mt-auto inline-flex pt-4 text-sm font-medium text-[#1d4f86]">
+          <TextLink href={withLang(lang, item.linkUrl)} className="shrink-0 text-sm font-medium text-[#1d4f86]">
             {tx(lang, { en: "View Details", zh: "查看詳情" })}
           </TextLink>
         )
@@ -29,7 +31,7 @@ export function AnnouncementCard({ item, lang }: { item: Announcement; lang: Lan
 
 export function AnnouncementGrid({ items, lang }: { items: Announcement[]; lang: Lang }) {
   return (
-    <div className="grid gap-4 md:grid-cols-2">
+    <div className="grid grid-cols-1 gap-3">
       {items.map((item) => (
         <AnnouncementCard key={item.id} item={item} lang={lang} />
       ))}

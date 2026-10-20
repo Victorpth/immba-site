@@ -119,6 +119,26 @@ export default async function HomePage({ params }: { params: Promise<{ lang: str
         </div>
       </section>
 
+      <section className="border-b border-border bg-cream/40">
+        <div className="site-wrap py-12 sm:py-16">
+          <div className="flex items-end justify-between gap-4">
+            <div>
+              <p className="text-xs font-semibold tracking-[0.2em] text-burgundy uppercase">
+                {tx(lang, { en: "Announcements", zh: "公告" })}
+              </p>
+              <h2 className="mt-3 text-4xl text-ink">{tx(lang, { en: "Latest from the office", zh: "所辦最新消息" })}</h2>
+            </div>
+            <TextLink href={withLang(lang, "/news")}>{tx(lang, { en: "All announcements", zh: "全部公告" })}</TextLink>
+          </div>
+          <div className="mt-8">
+            <PublicAnnouncements lang={lang} />
+          </div>
+          <div className="mt-8">
+            <AnnouncementSource lang={lang} />
+          </div>
+        </div>
+      </section>
+
       <section className="site-wrap py-16 sm:py-20">
         <div className="flex items-end justify-between gap-6">
           <div>
@@ -177,24 +197,6 @@ export default async function HomePage({ params }: { params: Promise<{ lang: str
               </div>
             ))}
           </div>
-        </div>
-      </section>
-
-      <section className="site-wrap py-16 sm:py-20">
-        <div className="flex items-end justify-between gap-4">
-          <div>
-            <p className="text-xs font-semibold tracking-[0.2em] text-burgundy uppercase">
-              {tx(lang, { en: "Announcements", zh: "公告" })}
-            </p>
-            <h2 className="mt-3 text-4xl text-ink">{tx(lang, { en: "Latest from the office", zh: "所辦最新消息" })}</h2>
-          </div>
-          <TextLink href={withLang(lang, "/news")}>{tx(lang, { en: "All announcements", zh: "全部公告" })}</TextLink>
-        </div>
-        <div className="mt-8">
-          <PublicAnnouncements lang={lang} />
-        </div>
-        <div className="mt-8">
-          <AnnouncementSource lang={lang} />
         </div>
       </section>
 

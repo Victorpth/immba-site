@@ -75,6 +75,30 @@ function notice(order: number, id: string, date: string, title: Bi, content: Bi)
 
 /** Order matches the source list: pinned items first, then newest. */
 export const announcements: Announcement[] = [
+  {
+    id: "learned-2026-10-13",
+    date: "2026-10-13",
+    linkUrl: "",
+    order: 0,
+    status: "published",
+    title: {
+      en: "What I learned today",
+      zh: "今天學到的事",
+    },
+    content: {
+      en: "Today I learned that a website is only as clear as the facts you put on the right page. The official imMBA site already holds the rankings, the fees, the dates, and the partner rules. My job was to place those facts on the matching pages, and to leave a gap when the official page itself is empty.\n\nI also learned that readable is not a new color. Larger type, stronger contrast, a menu that stays on one line, and a way to skip to the content make the same information easier to use. Publishing is the last step: the public link changes only after the work is sent live.",
+      zh: "今天我學到，網站清不清楚，取決於資料有沒有放在對的頁面。官方 imMBA 網站已經寫了排名、學雜費、日期和合作學校的規則。我要做的是把這些事實放到對應的頁面；官方頁面本身是空的，就不要自己補內容。\n\n我也學到，好讀不是換一個顏色。字大一點、對比清楚、選單保持一行，再加上可以跳到主要內容，同一份資料就比較好用。發布是最後一步：內容送上線之後，公開連結才會更新。",
+    },
+    sync: {
+      source: "en",
+      sourceTitle: "What I learned today",
+      sourceContent:
+        "Today I learned that a website is only as clear as the facts you put on the right page. The official imMBA site already holds the rankings, the fees, the dates, and the partner rules. My job was to place those facts on the matching pages, and to leave a gap when the official page itself is empty.\n\nI also learned that readable is not a new color. Larger type, stronger contrast, a menu that stays on one line, and a way to skip to the content make the same information easier to use. Publishing is the last step: the public link changes only after the work is sent live.",
+      targetTitle: "今天學到的事",
+      targetContent:
+        "今天我學到，網站清不清楚，取決於資料有沒有放在對的頁面。官方 imMBA 網站已經寫了排名、學雜費、日期和合作學校的規則。我要做的是把這些事實放到對應的頁面；官方頁面本身是空的，就不要自己補內容。\n\n我也學到，好讀不是換一個顏色。字大一點、對比清楚、選單保持一行，再加上可以跳到主要內容，同一份資料就比較好用。發布是最後一步：內容送上線之後，公開連結才會更新。",
+    },
+  },
   notice(
     1,
     "2689",

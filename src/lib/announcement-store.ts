@@ -32,6 +32,10 @@ function isAnnouncement(value: unknown): value is Announcement {
   );
 }
 
+function sameText(a: Announcement, b: Announcement) {
+  return a.title.en.trim() === b.title.en.trim() && a.title.zh.trim() === b.title.zh.trim();
+}
+
 export function readAnnouncements(): Announcement[] {
   if (typeof window === "undefined") return cloneSeed();
   try {
@@ -39,7 +43,11 @@ export function readAnnouncements(): Announcement[] {
     if (!raw) return cloneSeed();
     const parsed: unknown = JSON.parse(raw);
     if (!Array.isArray(parsed) || !parsed.every(isAnnouncement)) return cloneSeed();
-    return parsed;
+    const stored = parsed;
+    const missing = cloneSeed().filter(
+      (item) => !stored.some((current) => current.id === item.id || sameText(current, item)),
+    );
+    return [...stored, ...missing];
   } catch {
     return cloneSeed();
   }
