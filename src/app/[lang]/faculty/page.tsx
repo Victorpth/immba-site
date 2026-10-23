@@ -1,6 +1,7 @@
 import { FacultyBrowser } from "@/components/faculty-browser";
 import { PageIntro } from "@/components/page-intro";
-import { isLang } from "@/lib/i18n";
+import { listFaculty } from "@/lib/faculty-server";
+import { tx, isLang } from "@/lib/i18n";
 import { pageMeta } from "@/lib/meta";
 import { notFound } from "next/navigation";
 
@@ -10,6 +11,8 @@ const description = {
   zh: "國際經營管理碩士班專任與兼任教師。",
 };
 
+export const dynamic = "force-dynamic";
+
 export function generateMetadata({ params }: { params: Promise<{ lang: string }> }) {
   return pageMeta(params, title, description);
 }
@@ -18,6 +21,13 @@ export default async function FacultyPage({ params }: { params: Promise<{ lang: 
   const { lang: raw } = await params;
   if (!isLang(raw)) notFound();
   const lang = raw;
+  let people: Awaited<ReturnType<typeof listFaculty>> = [];
+  let unavailable = false;
+  try {
+    people = await listFaculty();
+  } catch {
+    unavailable = true;
+  }
 
   return (
     <>
@@ -31,7 +41,16 @@ export default async function FacultyPage({ params }: { params: Promise<{ lang: 
         }}
       />
       <section className="site-wrap py-14">
-        <FacultyBrowser lang={lang} />
+        {unavailable ? (
+          <p className="rounded-2xl border border-dashed border-border px-6 py-12 text-center text-sm text-muted-foreground">
+            {tx(lang, {
+              en: "The faculty list is unavailable right now.",
+              zh: "師資名單目前無法載入。",
+            })}
+          </p>
+        ) : (
+          <FacultyBrowser lang={lang} people={people} />
+        )}
       </section>
     </>
   );
