@@ -1,10 +1,13 @@
+import { requireStaff } from "@/lib/auth-access";
 import { parseFacultyOrder } from "@/lib/faculty-record";
 import { createSupabaseServer } from "@/lib/supabase-server";
 
 export const dynamic = "force-dynamic";
 
 export async function PUT(request: Request) {
-  // TODO: verify admin authentication before reordering faculty records.
+  const guard = await requireStaff();
+  if (!guard.ok) return Response.json({ error: guard.error }, { status: guard.status });
+
   let body: unknown;
   try {
     body = await request.json();

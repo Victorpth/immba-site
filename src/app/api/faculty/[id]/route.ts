@@ -1,3 +1,4 @@
+import { requireStaff } from "@/lib/auth-access";
 import { isFacultyId, parseFacultyWrite, toFacultyRecord } from "@/lib/faculty-record";
 import { createSupabaseServer } from "@/lib/supabase-server";
 
@@ -6,7 +7,9 @@ export const dynamic = "force-dynamic";
 type Context = { params: Promise<{ id: string }> };
 
 export async function PUT(request: Request, { params }: Context) {
-  // TODO: verify admin authentication before updating a faculty record.
+  const guard = await requireStaff();
+  if (!guard.ok) return Response.json({ error: guard.error }, { status: guard.status });
+
   const { id } = await params;
   if (!isFacultyId(id)) return Response.json({ error: "invalid_request" }, { status: 400 });
 
@@ -34,7 +37,9 @@ export async function PUT(request: Request, { params }: Context) {
 }
 
 export async function DELETE(_request: Request, { params }: Context) {
-  // TODO: verify admin authentication before deleting a faculty record.
+  const guard = await requireStaff();
+  if (!guard.ok) return Response.json({ error: guard.error }, { status: guard.status });
+
   const { id } = await params;
   if (!isFacultyId(id)) return Response.json({ error: "invalid_request" }, { status: 400 });
 

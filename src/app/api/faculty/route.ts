@@ -1,3 +1,4 @@
+import { requireStaff } from "@/lib/auth-access";
 import { parseFacultyWrite, toFacultyRecord } from "@/lib/faculty-record";
 import { listFaculty } from "@/lib/faculty-server";
 import { createSupabaseServer } from "@/lib/supabase-server";
@@ -13,7 +14,9 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  // TODO: verify admin authentication before creating a faculty record.
+  const guard = await requireStaff();
+  if (!guard.ok) return Response.json({ error: guard.error }, { status: guard.status });
+
   let body: unknown;
   try {
     body = await request.json();

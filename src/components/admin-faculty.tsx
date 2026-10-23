@@ -30,6 +30,8 @@ const errorText: Record<string, { en: string; zh: string }> = {
   not_found: { en: "That faculty record no longer exists.", zh: "找不到這筆師資資料。" },
   save_failed: { en: "The faculty record could not be saved.", zh: "師資資料無法儲存。" },
   load_failed: { en: "The faculty list could not be loaded.", zh: "師資名單無法載入。" },
+  unauthorized: { en: "Sign in again to change faculty records.", zh: "請重新登入後再修改師資。" },
+  forbidden: { en: "This account cannot change faculty records.", zh: "這個帳號不能修改師資。" },
 };
 
 function message(lang: Lang, code: string) {
