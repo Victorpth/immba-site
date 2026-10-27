@@ -32,7 +32,20 @@ const errorText: Record<string, { en: string; zh: string }> = {
   load_failed: { en: "The faculty list could not be loaded.", zh: "師資名單無法載入。" },
   unauthorized: { en: "Sign in again to change faculty records.", zh: "請重新登入後再修改師資。" },
   forbidden: { en: "This account cannot change faculty records.", zh: "這個帳號不能修改師資。" },
+  invalid_email: { en: "Enter a valid email address.", zh: "請輸入有效的電子郵件。" },
+  photo_type: { en: "Use a JPG, PNG, or WebP photo.", zh: "請使用 JPG、PNG 或 WebP 照片。" },
+  photo_too_large: { en: "The photo must be smaller than 5 MB.", zh: "照片必須小於 5 MB。" },
+  photo_failed: { en: "The photo could not be uploaded.", zh: "照片無法上傳。" },
+  photo_delete_failed: { en: "The previous photo could not be removed.", zh: "無法刪除先前的照片。" },
 };
+
+const photoTypes = ["image/jpeg", "image/png", "image/webp"];
+const photoLimit = 5 * 1024 * 1024;
+const fallbackPhoto = "/faculty-placeholder.svg";
+
+function validEmail(value: string) {
+  return value.length <= 320 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
 
 function message(lang: Lang, code: string) {
   return tx(lang, errorText[code] ?? { en: "Something went wrong.", zh: "發生錯誤。" });
@@ -95,6 +108,8 @@ export function AdminFaculty({ lang }: { lang: Lang }) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string>("");
 
   async function reload() {
     const body = await requestFaculty("/api/faculty");
@@ -118,10 +133,16 @@ export function AdminFaculty({ lang }: { lang: Lang }) {
     };
   }, [lang]);
 
+  function clearPhotoChoice() {
+    setPhotoFile(null);
+    setPhotoPreview("");
+  }
+
   function openCreate() {
     const nextOrder = items.length ? Math.max(...items.map((item) => item.sort_order)) + 1 : 1;
     setEditingId(null);
     setForm({ ...emptyForm, sort_order: String(nextOrder) });
+    clearPhotoChoice();
     setShowForm(true);
     setError("");
     setNotice("");
@@ -130,23 +151,64 @@ export function AdminFaculty({ lang }: { lang: Lang }) {
   function openEdit(person: FacultyRecord) {
     setEditingId(person.id);
     setForm(toForm(person));
+    clearPhotoChoice();
     setShowForm(true);
     setError("");
     setNotice("");
   }
 
+  function choosePhoto(file: File | null) {
+    if (!file) {
+      clearPhotoChoice();
+      return;
+    }
+    const extensionOk = /\.(jpe?g|png|webp)$/i.test(file.name);
+    if (!photoTypes.includes(file.type) || !extensionOk) {
+      clearPhotoChoice();
+      setError(message(lang, "photo_type"));
+      return;
+    }
+    if (file.size > photoLimit) {
+      clearPhotoChoice();
+      setError(message(lang, "photo_too_large"));
+      return;
+    }
+    setPhotoFile(file);
+    setPhotoPreview(URL.createObjectURL(file));
+    setError("");
+  }
+
+  async function uploadPhoto(file: File) {
+    const data = new FormData();
+    data.set("file", file);
+    const response = await fetch("/api/faculty/photo", { method: "POST", body: data });
+    const body = (await response.json().catch(() => null)) as { error?: string; image_url?: string } | null;
+    if (!response.ok || !body?.image_url) throw new Error(body?.error ?? "photo_failed");
+    return body.image_url;
+  }
+
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
+    if (!form.name.trim()) {
+      setError(message(lang, "name_required"));
+      return;
+    }
+    if (form.email.trim() && !validEmail(form.email.trim())) {
+      setError(message(lang, "invalid_email"));
+      return;
+    }
     setSaving(true);
     setError("");
     try {
+      const imageUrl = photoFile ? await uploadPhoto(photoFile) : form.image_url;
       await requestFaculty(editingId ? `/api/faculty/${editingId}` : "/api/faculty", {
         method: editingId ? "PUT" : "POST",
-        body: JSON.stringify(toWrite(form)),
+        body: JSON.stringify(toWrite({ ...form, image_url: imageUrl })),
       });
       await reload();
       setShowForm(false);
       setEditingId(null);
+      clearPhotoChoice();
       setNotice(tx(lang, { en: "Saved.", zh: "已儲存。" }));
     } catch (reason) {
       setError(message(lang, reason instanceof Error ? reason.message : "save_failed"));
@@ -202,7 +264,7 @@ export function AdminFaculty({ lang }: { lang: Lang }) {
           onClick={openCreate}
           className="inline-flex h-11 items-center rounded-full bg-primary px-5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/85"
         >
-          {tx(lang, { en: "New faculty member", zh: "新增師資" })}
+          {tx(lang, { en: "Add faculty", zh: "新增師資" })}
         </button>
       </div>
       {notice ? <p className="mt-4 text-sm text-[#1d4f86]">{notice}</p> : null}
@@ -250,9 +312,21 @@ export function AdminFaculty({ lang }: { lang: Lang }) {
               <input value={form.website} onChange={(event) => setField("website", event.target.value)} placeholder="https://" className={fieldClass} />
             </label>
             <label className="block text-sm font-semibold text-ink">
+              {tx(lang, { en: "Photo", zh: "照片" })}
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={(event) => choosePhoto(event.target.files?.[0] ?? null)}
+                className={fieldClass}
+              />
+            </label>
+            <label className="block text-sm font-semibold text-ink">
               {tx(lang, { en: "Photo URL", zh: "照片網址" })}
               <input value={form.image_url} onChange={(event) => setField("image_url", event.target.value)} placeholder="https://" className={fieldClass} />
             </label>
+            {photoPreview || form.image_url ? (
+              <img src={photoPreview || form.image_url || fallbackPhoto} alt="" className="h-40 w-32 rounded-2xl object-cover object-top" />
+            ) : null}
             <label className="block text-sm font-semibold text-ink">
               {tx(lang, { en: "Category", zh: "類別" })}
               <select
@@ -303,13 +377,16 @@ export function AdminFaculty({ lang }: { lang: Lang }) {
           {items.map((person, index) => (
             <li key={person.id} className="rounded-2xl border border-border bg-cream p-5">
               <div className="flex flex-wrap items-start justify-between gap-4">
-                <div className="min-w-0">
+                <div className="flex min-w-0 gap-4">
+                  <img src={person.image_url || fallbackPhoto} alt="" className="size-16 shrink-0 rounded-xl object-cover object-top" />
+                  <div className="min-w-0">
                   <p className="text-xs text-muted-foreground">
                     {tx(lang, { en: "Order", zh: "順序" })} {person.sort_order}
                     {person.category ? ` · ${tx(lang, { en: person.category, zh: person.category === "full-time" ? "專任" : person.category === "visiting" ? "客座" : "兼任" })}` : ""}
                   </p>
                   <p className="mt-2 text-lg leading-snug text-ink">{person.name}</p>
                   {person.title ? <p className="mt-1 text-sm text-muted-foreground">{person.title}</p> : null}
+                  </div>
                 </div>
                 <div className="flex flex-wrap gap-4">
                   <button
@@ -357,8 +434,8 @@ export function AdminFaculty({ lang }: { lang: Lang }) {
             </h2>
             <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
               {tx(lang, {
-                en: "This removes the person from the public faculty page.",
-                zh: "這會從公開師資頁移除這位教師。",
+                en: "This removes the person from the public faculty page and deletes their photo.",
+                zh: "這會從公開師資頁移除這位教師，並刪除照片。",
               })}
             </p>
             <p className="mt-3 text-sm font-medium text-ink">{pendingDelete.name}</p>

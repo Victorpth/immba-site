@@ -56,6 +56,9 @@ export function parseFacultyWrite(body: unknown): { ok: true; value: FacultyWrit
   const education = optionalText(record.education);
   const researchFields = optionalText(record.research_fields);
   const email = optionalText(record.email);
+  if (email && (email.length > 320 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))) {
+    return { ok: false, error: "invalid_email" };
+  }
   const phone = optionalText(record.phone);
   const websiteText = optionalText(record.website);
   const imageText = optionalText(record.image_url);

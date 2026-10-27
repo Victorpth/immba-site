@@ -14,15 +14,7 @@ const categoryLabel: Record<FacultyCategory, { en: string; zh: string }> = {
   adjunct: { en: "Adjunct", zh: "兼任" },
 };
 
-function initials(name: string) {
-  const parts = name
-    .replace(/\./g, "")
-    .split(/\s+/)
-    .filter((part) => part.length > 1);
-  const first = parts[0]?.[0] ?? "";
-  const last = parts.length > 1 ? parts[parts.length - 1][0] : "";
-  return `${first}${last}`.toUpperCase();
-}
+const fallbackPhoto = "/faculty-placeholder.svg";
 
 export function FacultyBrowser({ lang, people }: { lang: Lang; people: FacultyRecord[] }) {
   const [filter, setFilter] = useState<Filter>("all");
@@ -78,30 +70,46 @@ export function FacultyBrowser({ lang, people }: { lang: Lang; people: FacultyRe
               })}
         </p>
       ) : (
-        <ul className="mt-8 grid grid-cols-1 gap-4">
-          {visible.map((person) => (
-            <li key={person.id} id={person.id}>
-              <FacultyCard person={person} lang={lang} />
-            </li>
+        <div className="mt-8 space-y-10">
+          {sections(visible).map((section) => (
+            <section key={section.id}>
+              <h2 className="text-2xl text-ink">{tx(lang, section.label)}</h2>
+              <ul className="mt-4 grid grid-cols-1 gap-4">
+                {section.people.map((person) => (
+                  <li key={person.id} id={person.id}>
+                    <FacultyCard person={person} lang={lang} />
+                  </li>
+                ))}
+              </ul>
+            </section>
           ))}
-        </ul>
+        </div>
       )}
     </div>
   );
 }
 
+function sections(people: FacultyRecord[]) {
+  const grouped: { id: string; label: { en: string; zh: string }; people: FacultyRecord[] }[] = facultyCategories.map((id) => ({
+    id,
+    label: categoryLabel[id],
+    people: people.filter((person) => person.category === id),
+  }));
+  const other = people.filter((person) => person.category === null);
+  if (other.length > 0) grouped.push({ id: "other", label: { en: "Other", zh: "其他" }, people: other });
+  return grouped.filter((section) => section.people.length > 0);
+}
+
 function FacultyCard({ person, lang }: { person: FacultyRecord; lang: Lang }) {
   return (
     <article className="interactive-card flex w-full flex-col gap-5 rounded-2xl border-border bg-cream p-5 sm:flex-row sm:items-center sm:gap-8 sm:p-6">
-      {person.image_url ? (
-        <img src={person.image_url} alt="" className="h-56 w-44 shrink-0 rounded-2xl object-cover object-top sm:h-64 sm:w-48" />
-      ) : (
-        <div className="flex h-56 w-44 shrink-0 items-center justify-center rounded-2xl bg-ink font-display text-4xl text-cream sm:h-64 sm:w-48">
-          {initials(person.name)}
-        </div>
-      )}
+      <img
+        src={person.image_url || fallbackPhoto}
+        alt=""
+        className="h-56 w-44 shrink-0 rounded-2xl object-cover object-top sm:h-64 sm:w-48"
+      />
       <div className="min-w-0 flex-1">
-        <h2 className="font-sans text-2xl font-semibold tracking-normal text-ink sm:text-3xl">{person.name}</h2>
+        <h3 className="font-sans text-2xl font-semibold tracking-normal text-ink sm:text-3xl">{person.name}</h3>
         {person.title ? <p className="mt-2 text-lg text-burgundy">{person.title}</p> : null}
         {person.category ? <p className="mt-1 text-lg text-[#243044]">{tx(lang, categoryLabel[person.category])}</p> : null}
         {person.research_fields ? <p className="mt-4 text-lg leading-relaxed text-foreground">{person.research_fields}</p> : null}

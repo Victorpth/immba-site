@@ -1,5 +1,6 @@
 import { requireStaff } from "@/lib/auth-access";
 import { parseFacultyOrder } from "@/lib/faculty-record";
+import { revalidateFacultyPages } from "@/lib/faculty-server";
 import { createSupabaseServer } from "@/lib/supabase-server";
 
 export const dynamic = "force-dynamic";
@@ -24,6 +25,7 @@ export async function PUT(request: Request) {
       const { error } = await supabase.from("faculty").update({ sort_order: index + 1 }).eq("id", parsed.ids[index]);
       if (error) return Response.json({ error: "save_failed" }, { status: 500 });
     }
+    revalidateFacultyPages();
     return Response.json({ ok: true });
   } catch {
     return Response.json({ error: "save_failed" }, { status: 500 });

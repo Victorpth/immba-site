@@ -1,6 +1,6 @@
 import { requireStaff } from "@/lib/auth-access";
 import { parseFacultyWrite, toFacultyRecord } from "@/lib/faculty-record";
-import { listFaculty } from "@/lib/faculty-server";
+import { listFaculty, revalidateFacultyPages } from "@/lib/faculty-server";
 import { createSupabaseServer } from "@/lib/supabase-server";
 
 export const dynamic = "force-dynamic";
@@ -33,6 +33,7 @@ export async function POST(request: Request) {
     if (error || !data) return Response.json({ error: "save_failed" }, { status: 500 });
     const record = toFacultyRecord(data);
     if (!record) return Response.json({ error: "save_failed" }, { status: 500 });
+    revalidateFacultyPages();
     return Response.json(record, { status: 201 });
   } catch {
     return Response.json({ error: "save_failed" }, { status: 500 });

@@ -2,6 +2,7 @@ import "server-only";
 
 import { toFacultyRecord, type FacultyRecord } from "@/lib/faculty-record";
 import { createSupabaseServer } from "@/lib/supabase-server";
+import { revalidatePath } from "next/cache";
 
 const columns = "id, name, title, education, research_fields, email, phone, website, image_url, category, sort_order";
 
@@ -13,4 +14,9 @@ export async function listFaculty(): Promise<FacultyRecord[]> {
     const record = toFacultyRecord(row);
     return record ? [record] : [];
   });
+}
+
+export function revalidateFacultyPages() {
+  revalidatePath("/en/faculty");
+  revalidatePath("/zh/faculty");
 }
