@@ -59,8 +59,10 @@ export async function signUp(_state: AuthFormState, formData: FormData): Promise
   const lang = formLang(formData.get("lang"));
   const email = text(formData, "email");
   const passwordValue = password(formData);
+  const confirmValue = formData.get("password_confirm");
   if (!validEmail(email)) return { error: "invalid_email" };
   if (!validPassword(passwordValue)) return { error: "weak_password" };
+  if (typeof confirmValue !== "string" || confirmValue !== passwordValue) return { error: "password_mismatch" };
 
   const origin = await requestOrigin();
   if (!origin) return { error: "auth_failed" };

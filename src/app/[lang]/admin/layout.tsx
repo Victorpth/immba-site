@@ -1,3 +1,4 @@
+import { AdminNav } from "@/components/admin-nav";
 import { signOut } from "@/lib/auth-actions";
 import { getAccess, isStaff } from "@/lib/auth-access";
 import { isLang, tx, withLang, type Lang } from "@/lib/i18n";
@@ -41,6 +42,7 @@ export default async function AdminLayout({
           </div>
         </div>
       </div>
+      <AdminNav lang={lang} />
       {children}
     </>
   );

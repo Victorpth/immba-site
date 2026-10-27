@@ -1,6 +1,5 @@
 import { FacultyBrowser } from "@/components/faculty-browser";
 import { PageIntro } from "@/components/page-intro";
-import { getAccess, isStaff } from "@/lib/auth-access";
 import { listFaculty } from "@/lib/faculty-server";
 import { tx, isLang } from "@/lib/i18n";
 import { pageMeta } from "@/lib/meta";
@@ -24,16 +23,10 @@ export default async function FacultyPage({ params }: { params: Promise<{ lang: 
   const lang = raw;
   let people: Awaited<ReturnType<typeof listFaculty>> = [];
   let unavailable = false;
-  let canManage = false;
   try {
     people = await listFaculty();
   } catch {
     unavailable = true;
-  }
-  try {
-    canManage = isStaff(await getAccess());
-  } catch {
-    canManage = false;
   }
 
   return (
@@ -56,7 +49,7 @@ export default async function FacultyPage({ params }: { params: Promise<{ lang: 
             })}
           </p>
         ) : (
-          <FacultyBrowser lang={lang} people={people} canManage={canManage} />
+          <FacultyBrowser lang={lang} people={people} />
         )}
       </section>
     </>

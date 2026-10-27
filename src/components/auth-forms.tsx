@@ -3,7 +3,7 @@
 import { requestPasswordReset, signIn, signUp, updatePassword, type AuthFormState } from "@/lib/auth-actions";
 import { tx, withLang, type Lang } from "@/lib/i18n";
 import Link from "next/link";
-import { useActionState, type ReactNode } from "react";
+import { useActionState, useState, type ReactNode } from "react";
 
 const fieldClass =
   "mt-2 w-full rounded-xl border border-input bg-white px-3 py-2 text-sm text-ink outline-none focus:border-burgundy";
@@ -15,6 +15,7 @@ const copy: Record<string, { en: string; zh: string }> = {
   invalid_credentials: { en: "That email or password is not right.", zh: "電子郵件或密碼不正確。" },
   invalid_email: { en: "Enter a valid email address.", zh: "請輸入有效的電子郵件。" },
   weak_password: { en: "Use a password of at least 8 characters.", zh: "密碼至少需要 8 個字元。" },
+  password_mismatch: { en: "The two passwords do not match.", zh: "兩次輸入的密碼不相同。" },
   auth_failed: { en: "The request could not be completed. Try again.", zh: "這次無法完成，請再試一次。" },
   check_email: { en: "Check your email to confirm the account. It stays pending until a super admin approves it.", zh: "請到信箱確認帳號。帳號會先保持待核准，直到超級管理員核准。" },
   reset_sent: { en: "If that email has an account, a reset link is on its way.", zh: "如果這個信箱已有帳號，重設連結已經寄出。" },
@@ -96,19 +97,68 @@ export function AuthLoginForm({ lang, next, callbackFailed }: { lang: Lang; next
   );
 }
 
+function PasswordField({
+  lang,
+  name,
+  label,
+  autoComplete,
+}: {
+  lang: Lang;
+  name: string;
+  label: { en: string; zh: string };
+  autoComplete: string;
+}) {
+  const [visible, setVisible] = useState(false);
+  return (
+    <label className="mt-4 block text-sm font-semibold text-ink">
+      {tx(lang, label)}
+      <span className="relative mt-2 block">
+        <input
+          name={name}
+          type={visible ? "text" : "password"}
+          autoComplete={autoComplete}
+          required
+          minLength={8}
+          className="w-full rounded-xl border border-input bg-white py-2 pr-20 pl-3 text-sm text-ink outline-none focus:border-burgundy"
+        />
+        <button
+          type="button"
+          onClick={() => setVisible((current) => !current)}
+          aria-pressed={visible}
+          className="absolute top-1/2 right-3 -translate-y-1/2 text-sm font-semibold text-burgundy underline underline-offset-2"
+        >
+          {visible ? tx(lang, { en: "Hide", zh: "隱藏" }) : tx(lang, { en: "Show", zh: "顯示" })}
+        </button>
+      </span>
+    </label>
+  );
+}
+
 export function AuthSignupForm({ lang }: { lang: Lang }) {
   const [state, action, pending] = useActionState(signUp, {});
+  const text = notice(lang, state);
   return (
     <form action={action}>
-      <AuthFields
-        lang={lang}
-        state={state}
-        pending={pending}
-        passwordLabel={{ en: "Password", zh: "密碼" }}
-        passwordAutoComplete="new-password"
-      >
-        {tx(lang, { en: "Create account", zh: "建立帳號" })}
-      </AuthFields>
+      <div className="site-wrap max-w-xl py-14">
+        <input type="hidden" name="lang" value={lang} />
+        <label className="block text-sm font-semibold text-ink">
+          {tx(lang, { en: "Email", zh: "電子郵件" })}
+          <input name="email" type="email" autoComplete="email" required className={fieldClass} />
+        </label>
+        <PasswordField lang={lang} name="password" label={{ en: "Password", zh: "密碼" }} autoComplete="new-password" />
+        <PasswordField
+          lang={lang}
+          name="password_confirm"
+          label={{ en: "Confirm password", zh: "確認密碼" }}
+          autoComplete="new-password"
+        />
+        {text ? <p className={`mt-4 text-sm ${state.error ? "text-burgundy" : "text-[#1d4f86]"}`}>{text}</p> : null}
+        <div className="mt-6">
+          <button type="submit" disabled={pending} className={submitClass}>
+            {tx(lang, { en: "Create account", zh: "建立帳號" })}
+          </button>
+        </div>
+      </div>
       <p className="site-wrap -mt-8 max-w-xl pb-14 text-sm">
         <Link className="underline underline-offset-2" href={withLang(lang, "/login")}>
           {tx(lang, { en: "Already have an account? Sign in", zh: "已有帳號？前往登入" })}
