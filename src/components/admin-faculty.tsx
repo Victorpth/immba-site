@@ -3,7 +3,7 @@
 import { TextLink } from "@/components/site-links";
 import { type FacultyCategory, type FacultyRecord, type FacultyWrite } from "@/lib/faculty-record";
 import { tx, withLang, type Lang } from "@/lib/i18n";
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 
 const fieldClass =
   "mt-2 w-full rounded-xl border border-input bg-white px-3 py-2 text-sm text-ink outline-none focus:border-burgundy";
@@ -42,6 +42,10 @@ const errorText: Record<string, { en: string; zh: string }> = {
 const photoTypes = ["image/jpeg", "image/png", "image/webp"];
 const photoLimit = 5 * 1024 * 1024;
 const fallbackPhoto = "/faculty-placeholder.svg";
+const actionButton =
+  "inline-flex h-10 items-center rounded-full border border-border bg-white px-4 text-sm font-semibold text-ink hover:border-burgundy disabled:opacity-40";
+const primaryButton =
+  "inline-flex h-11 items-center rounded-full bg-primary px-5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/85 disabled:opacity-60";
 
 function validEmail(value: string) {
   return value.length <= 320 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
@@ -110,6 +114,13 @@ export function AdminFaculty({ lang }: { lang: Lang }) {
   const [saving, setSaving] = useState(false);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string>("");
+  const formRef = useRef<HTMLFormElement>(null);
+
+  useEffect(() => {
+    if (!showForm) return;
+    const field = formRef.current?.elements.namedItem("name");
+    if (field instanceof HTMLInputElement) field.focus();
+  }, [showForm, editingId]);
 
   async function reload() {
     const body = await requestFaculty("/api/faculty");
@@ -163,7 +174,8 @@ export function AdminFaculty({ lang }: { lang: Lang }) {
       return;
     }
     const extensionOk = /\.(jpe?g|png|webp)$/i.test(file.name);
-    if (!photoTypes.includes(file.type) || !extensionOk) {
+    const mimeOk = file.type === "" || photoTypes.includes(file.type);
+    if (!extensionOk || !mimeOk) {
       clearPhotoChoice();
       setError(message(lang, "photo_type"));
       return;
@@ -259,20 +271,32 @@ export function AdminFaculty({ lang }: { lang: Lang }) {
     <section className="site-wrap py-14">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <TextLink href={withLang(lang, "/faculty")}>{tx(lang, { en: "View the public faculty page", zh: "查看公開師資頁" })}</TextLink>
-        <button
-          type="button"
-          onClick={openCreate}
-          className="inline-flex h-11 items-center rounded-full bg-primary px-5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/85"
-        >
+        <button type="button" onClick={openCreate} className={primaryButton}>
           {tx(lang, { en: "Add faculty", zh: "新增師資" })}
         </button>
       </div>
-      {notice ? <p className="mt-4 text-sm text-[#1d4f86]">{notice}</p> : null}
-      {error ? <p className="mt-4 text-sm text-burgundy">{error}</p> : null}
+      {notice ? (
+        <p className="mt-4 text-sm text-[#1d4f86]" role="status">
+          {notice}
+        </p>
+      ) : null}
+      {error && !showForm ? (
+        <p className="mt-4 text-sm text-burgundy" role="alert">
+          {error}
+        </p>
+      ) : null}
 
       {showForm ? (
-        <form onSubmit={onSubmit} className="mt-8 rounded-2xl border border-border bg-cream p-5 sm:p-6">
-          <h2 className="text-3xl text-ink">
+        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-[#121a27]/45 p-4 sm:items-center">
+        <form
+          ref={formRef}
+          onSubmit={onSubmit}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="faculty-editor-title"
+          className="my-auto w-full max-w-3xl rounded-2xl border border-border bg-cream p-5 shadow-xl sm:p-6"
+        >
+          <h2 id="faculty-editor-title" className="text-3xl text-ink">
             {editingId
               ? tx(lang, { en: "Edit faculty member", zh: "編輯師資" })
               : tx(lang, { en: "New faculty member", zh: "新增師資" })}
@@ -280,7 +304,7 @@ export function AdminFaculty({ lang }: { lang: Lang }) {
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
             <label className="block text-sm font-semibold text-ink">
               {tx(lang, { en: "Name", zh: "姓名" })}
-              <input required value={form.name} onChange={(event) => setField("name", event.target.value)} className={fieldClass} />
+              <input name="name" required value={form.name} onChange={(event) => setField("name", event.target.value)} className={fieldClass} />
             </label>
             <label className="block text-sm font-semibold text-ink">
               {tx(lang, { en: "Title", zh: "職稱" })}
@@ -350,12 +374,13 @@ export function AdminFaculty({ lang }: { lang: Lang }) {
               />
             </label>
           </div>
+          {error ? (
+            <p className="mt-4 text-sm text-burgundy" role="alert">
+              {error}
+            </p>
+          ) : null}
           <div className="mt-6 flex flex-wrap items-center gap-4">
-            <button
-              type="submit"
-              disabled={saving}
-              className="inline-flex h-11 items-center rounded-full bg-primary px-5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/85 disabled:opacity-60"
-            >
+            <button type="submit" disabled={saving} className={primaryButton}>
               {tx(lang, { en: "Save faculty member", zh: "儲存師資" })}
             </button>
             <button
@@ -367,9 +392,15 @@ export function AdminFaculty({ lang }: { lang: Lang }) {
             </button>
           </div>
         </form>
+        </div>
       ) : null}
 
-      <h2 className="mt-10 text-3xl text-ink">{tx(lang, { en: "All faculty", zh: "全部師資" })}</h2>
+      <div className="mt-10 flex flex-wrap items-center justify-between gap-4">
+        <h2 className="text-3xl text-ink">{tx(lang, { en: "All faculty", zh: "全部師資" })}</h2>
+        <button type="button" onClick={openCreate} className={primaryButton}>
+          {tx(lang, { en: "Add faculty", zh: "新增師資" })}
+        </button>
+      </div>
       {loading ? (
         <p className="mt-5 text-sm text-muted-foreground">{tx(lang, { en: "Loading faculty…", zh: "正在載入師資…" })}</p>
       ) : (
@@ -389,33 +420,19 @@ export function AdminFaculty({ lang }: { lang: Lang }) {
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-4">
-                  <button
-                    type="button"
-                    disabled={saving || index === 0}
-                    onClick={() => move(index, -1)}
-                    className="text-sm font-semibold text-ink underline decoration-[#c5d0dc] underline-offset-4 hover:text-[#1d4f86] disabled:opacity-40"
-                  >
+                  <button type="button" disabled={saving || index === 0} onClick={() => move(index, -1)} className={actionButton}>
                     {tx(lang, { en: "Move up", zh: "上移" })}
                   </button>
-                  <button
-                    type="button"
-                    disabled={saving || index === items.length - 1}
-                    onClick={() => move(index, 1)}
-                    className="text-sm font-semibold text-ink underline decoration-[#c5d0dc] underline-offset-4 hover:text-[#1d4f86] disabled:opacity-40"
-                  >
+                  <button type="button" disabled={saving || index === items.length - 1} onClick={() => move(index, 1)} className={actionButton}>
                     {tx(lang, { en: "Move down", zh: "下移" })}
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => openEdit(person)}
-                    className="text-sm font-semibold text-ink underline decoration-[#c5d0dc] underline-offset-4 hover:text-[#1d4f86]"
-                  >
+                  <button type="button" onClick={() => openEdit(person)} className={actionButton}>
                     {tx(lang, { en: "Edit", zh: "編輯" })}
                   </button>
                   <button
                     type="button"
                     onClick={() => setPendingDelete(person)}
-                    className="text-sm font-semibold text-burgundy underline decoration-burgundy/30 underline-offset-4 hover:decoration-burgundy"
+                    className="inline-flex h-10 items-center rounded-full border border-burgundy/30 bg-white px-4 text-sm font-semibold text-burgundy hover:border-burgundy"
                   >
                     {tx(lang, { en: "Delete", zh: "刪除" })}
                   </button>
@@ -440,12 +457,7 @@ export function AdminFaculty({ lang }: { lang: Lang }) {
             </p>
             <p className="mt-3 text-sm font-medium text-ink">{pendingDelete.name}</p>
             <div className="mt-6 flex flex-wrap gap-3">
-              <button
-                type="button"
-                disabled={saving}
-                onClick={() => remove(pendingDelete)}
-                className="inline-flex h-11 items-center rounded-full bg-primary px-5 text-sm font-semibold text-primary-foreground hover:bg-primary/85 disabled:opacity-60"
-              >
+              <button type="button" disabled={saving} onClick={() => remove(pendingDelete)} className={primaryButton}>
                 {tx(lang, { en: "Delete faculty member", zh: "刪除師資" })}
               </button>
               <button
