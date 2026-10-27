@@ -395,12 +395,7 @@ export function AdminFaculty({ lang }: { lang: Lang }) {
         </div>
       ) : null}
 
-      <div className="mt-10 flex flex-wrap items-center justify-between gap-4">
-        <h2 className="text-3xl text-ink">{tx(lang, { en: "All faculty", zh: "全部師資" })}</h2>
-        <button type="button" onClick={openCreate} className={primaryButton}>
-          {tx(lang, { en: "Add faculty", zh: "新增師資" })}
-        </button>
-      </div>
+      <h2 className="mt-10 text-3xl text-ink">{tx(lang, { en: "All faculty", zh: "全部師資" })}</h2>
       {loading ? (
         <p className="mt-5 text-sm text-muted-foreground">{tx(lang, { en: "Loading faculty…", zh: "正在載入師資…" })}</p>
       ) : (

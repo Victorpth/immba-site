@@ -27,12 +27,6 @@ export default async function AdminLayout({
         <div className="site-wrap flex flex-wrap items-center justify-between gap-3 py-3 text-sm">
           <p className="text-[#243044]">{access.email}</p>
           <div className="flex flex-wrap items-center gap-4">
-            <Link className="font-semibold underline underline-offset-2" href={withLang(lang, "/admin/news")}>
-              {tx(lang, { en: "Announcements", zh: "公告" })}
-            </Link>
-            <Link className="font-semibold underline underline-offset-2" href={withLang(lang, "/admin/faculty")}>
-              {tx(lang, { en: "Faculty", zh: "師資" })}
-            </Link>
             {access.role === "super_admin" ? (
               <Link className="font-semibold underline underline-offset-2" href={withLang(lang, "/admin/users")}>
                 {tx(lang, { en: "Accounts", zh: "帳號" })}
