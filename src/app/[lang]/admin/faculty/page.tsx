@@ -1,5 +1,6 @@
 import { AdminFaculty } from "@/components/admin-faculty";
 import { PageIntro } from "@/components/page-intro";
+import { isFacultyId } from "@/lib/faculty-record";
 import { isLang } from "@/lib/i18n";
 import { pageMeta } from "@/lib/meta";
 import { notFound } from "next/navigation";
@@ -14,10 +15,18 @@ export function generateMetadata({ params }: { params: Promise<{ lang: string }>
   return pageMeta(params, title, description);
 }
 
-export default async function AdminFacultyPage({ params }: { params: Promise<{ lang: string }> }) {
+export default async function AdminFacultyPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ lang: string }>;
+  searchParams: Promise<{ new?: string; edit?: string }>;
+}) {
   const { lang: raw } = await params;
   if (!isLang(raw)) notFound();
   const lang = raw;
+  const query = await searchParams;
+  const start = query.new === "1" ? { mode: "new" as const } : query.edit && isFacultyId(query.edit) ? { mode: "edit" as const, id: query.edit } : undefined;
 
   return (
     <>
@@ -30,7 +39,7 @@ export default async function AdminFacultyPage({ params }: { params: Promise<{ l
           zh: "資料存在師資資料表。公開師資頁讀取同一批資料，並依顯示順序排列。",
         }}
       />
-      <AdminFaculty lang={lang} />
+      <AdminFaculty lang={lang} start={start} />
     </>
   );
 }

@@ -24,7 +24,7 @@ export default async function PendingPage({ params }: { params: Promise<{ lang: 
 
   const access = await getAccess();
   if (access.status === "anonymous") redirect(`/${lang}/login`);
-  if (isStaff(access)) redirect(`/${lang}/admin/news`);
+  if (isStaff(access)) redirect(`/${lang}/admin/faculty`);
 
   return (
     <>

@@ -102,7 +102,9 @@ async function requestFaculty(path: string, init?: RequestInit) {
   return body;
 }
 
-export function AdminFaculty({ lang }: { lang: Lang }) {
+type FacultyStart = { mode: "new" } | { mode: "edit"; id: string };
+
+export function AdminFaculty({ lang, start }: { lang: Lang; start?: FacultyStart }) {
   const [items, setItems] = useState<FacultyRecord[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>(emptyForm);
@@ -115,6 +117,7 @@ export function AdminFaculty({ lang }: { lang: Lang }) {
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string>("");
   const formRef = useRef<HTMLFormElement>(null);
+  const opened = useRef(false);
 
   useEffect(() => {
     if (!showForm) return;
@@ -167,6 +170,19 @@ export function AdminFaculty({ lang }: { lang: Lang }) {
     setError("");
     setNotice("");
   }
+
+  useEffect(() => {
+    if (opened.current || loading || !start) return;
+    if (start.mode === "new") {
+      opened.current = true;
+      openCreate();
+      return;
+    }
+    const person = items.find((item) => item.id === start.id);
+    if (!person) return;
+    opened.current = true;
+    openEdit(person);
+  }, [loading, items, start]);
 
   function choosePhoto(file: File | null) {
     if (!file) {

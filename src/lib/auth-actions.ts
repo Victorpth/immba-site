@@ -52,7 +52,7 @@ export async function signIn(_state: AuthFormState, formData: FormData): Promise
   if (!isStaff(access)) redirect(`/${lang}/pending`);
 
   const next = safeNextPath(text(formData, "next"));
-  redirect(next?.startsWith(`/${lang}/admin`) ? next : `/${lang}/admin/news`);
+  redirect(next?.startsWith(`/${lang}/admin`) ? next : `/${lang}/admin/faculty`);
 }
 
 export async function signUp(_state: AuthFormState, formData: FormData): Promise<AuthFormState> {
@@ -120,7 +120,7 @@ export async function updatePassword(_state: AuthFormState, formData: FormData):
   }
 
   const access = await getAccess();
-  redirect(isStaff(access) ? `/${lang}/admin/news` : `/${lang}/pending`);
+  redirect(isStaff(access) ? `/${lang}/admin/faculty` : `/${lang}/pending`);
 }
 
 export async function signOut(formData: FormData) {

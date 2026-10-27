@@ -23,7 +23,7 @@ export default async function SignupPage({ params }: { params: Promise<{ lang: s
   const lang = raw;
 
   const access = await getAccess();
-  if (isStaff(access)) redirect(`/${lang}/admin/news`);
+  if (isStaff(access)) redirect(`/${lang}/admin/faculty`);
   if (access.status === "authenticated") redirect(`/${lang}/pending`);
 
   return (

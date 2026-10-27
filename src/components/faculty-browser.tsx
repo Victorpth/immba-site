@@ -3,7 +3,8 @@
 import { Input } from "@/components/ui/input";
 import { ExternalLink } from "@/components/site-links";
 import { facultyCategories, type FacultyCategory, type FacultyRecord } from "@/lib/faculty-record";
-import { tx, type Lang } from "@/lib/i18n";
+import { tx, withLang, type Lang } from "@/lib/i18n";
+import Link from "next/link";
 import { useMemo, useState } from "react";
 
 type Filter = "all" | FacultyCategory;
@@ -16,7 +17,12 @@ const categoryLabel: Record<FacultyCategory, { en: string; zh: string }> = {
 
 const fallbackPhoto = "/faculty-placeholder.svg";
 
-export function FacultyBrowser({ lang, people }: { lang: Lang; people: FacultyRecord[] }) {
+const addButton =
+  "inline-flex h-11 items-center rounded-full bg-primary px-5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/85";
+const editButton =
+  "inline-flex h-10 items-center rounded-full border border-border bg-white px-4 text-sm font-semibold text-ink hover:border-burgundy";
+
+export function FacultyBrowser({ lang, people, canManage = false }: { lang: Lang; people: FacultyRecord[]; canManage?: boolean }) {
   const [filter, setFilter] = useState<Filter>("all");
   const [query, setQuery] = useState("");
 
@@ -37,6 +43,13 @@ export function FacultyBrowser({ lang, people }: { lang: Lang; people: FacultyRe
 
   return (
     <div>
+      {canManage ? (
+        <div className="mb-6 flex justify-end">
+          <Link href={withLang(lang, "/admin/faculty?new=1")} className={addButton}>
+            {tx(lang, { en: "Add faculty", zh: "新增師資" })}
+          </Link>
+        </div>
+      ) : null}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap gap-2">
           {filters.map((item) => (
@@ -77,7 +90,7 @@ export function FacultyBrowser({ lang, people }: { lang: Lang; people: FacultyRe
               <ul className="mt-4 grid grid-cols-1 gap-4">
                 {section.people.map((person) => (
                   <li key={person.id} id={person.id}>
-                    <FacultyCard person={person} lang={lang} />
+                    <FacultyCard person={person} lang={lang} canManage={canManage} />
                   </li>
                 ))}
               </ul>
@@ -100,7 +113,7 @@ function sections(people: FacultyRecord[]) {
   return grouped.filter((section) => section.people.length > 0);
 }
 
-function FacultyCard({ person, lang }: { person: FacultyRecord; lang: Lang }) {
+function FacultyCard({ person, lang, canManage }: { person: FacultyRecord; lang: Lang; canManage: boolean }) {
   return (
     <article className="interactive-card flex w-full flex-col gap-5 rounded-2xl border-border bg-cream p-5 sm:flex-row sm:items-center sm:gap-8 sm:p-6">
       <img
@@ -109,7 +122,12 @@ function FacultyCard({ person, lang }: { person: FacultyRecord; lang: Lang }) {
         className="h-56 w-44 shrink-0 rounded-2xl object-cover object-top sm:h-64 sm:w-48"
       />
       <div className="min-w-0 flex-1">
-        <h3 className="font-sans text-2xl font-semibold tracking-normal text-ink sm:text-3xl">{person.name}</h3>
+        {canManage ? (
+          <Link href={withLang(lang, `/admin/faculty?edit=${person.id}`)} className={editButton}>
+            {tx(lang, { en: "Edit", zh: "編輯" })}
+          </Link>
+        ) : null}
+        <h3 className={`${canManage ? "mt-3" : ""} font-sans text-2xl font-semibold tracking-normal text-ink sm:text-3xl`}>{person.name}</h3>
         {person.title ? <p className="mt-2 text-lg text-burgundy">{person.title}</p> : null}
         {person.category ? <p className="mt-1 text-lg text-[#243044]">{tx(lang, categoryLabel[person.category])}</p> : null}
         {person.research_fields ? <p className="mt-4 text-lg leading-relaxed text-foreground">{person.research_fields}</p> : null}

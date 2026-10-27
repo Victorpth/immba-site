@@ -32,7 +32,7 @@ export default async function LoginPage({
   const next = safeNextPath(query.next);
 
   const access = await getAccess();
-  if (isStaff(access)) redirect(next?.startsWith(`/${lang}/admin`) ? next : `/${lang}/admin/news`);
+  if (isStaff(access)) redirect(next?.startsWith(`/${lang}/admin`) ? next : `/${lang}/admin/faculty`);
   if (access.status === "authenticated") redirect(`/${lang}/pending`);
 
   return (

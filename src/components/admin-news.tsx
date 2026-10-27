@@ -13,6 +13,7 @@ import { useAnnouncements, writeAnnouncements } from "@/lib/announcement-store";
 import { formatDate, tx, withLang, type Lang } from "@/lib/i18n";
 import { translateTexts } from "@/lib/translate-client";
 import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 
 const fieldClass =
   "mt-2 w-full rounded-xl border border-input bg-white px-3 py-2 text-sm text-ink outline-none focus:border-burgundy";
@@ -547,9 +548,17 @@ export function AdminNewsManager({ lang }: { lang: Lang }) {
   return (
     <section className="site-wrap py-14">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <TextLink href={withLang(lang, "/news")}>
-          {tx(lang, { en: "View the public announcements", zh: "查看公開公告" })}
-        </TextLink>
+        <div className="flex flex-wrap items-center gap-4">
+          <TextLink href={withLang(lang, "/news")}>
+            {tx(lang, { en: "View the public announcements", zh: "查看公開公告" })}
+          </TextLink>
+          <Link
+            href={withLang(lang, "/admin/faculty")}
+            className="inline-flex h-11 items-center rounded-full border border-border bg-white px-5 text-sm font-semibold text-ink hover:border-burgundy"
+          >
+            {tx(lang, { en: "Add or edit faculty", zh: "新增或編輯師資" })}
+          </Link>
+        </div>
         <button
           type="button"
           onClick={openCreate}
