@@ -78,7 +78,7 @@ export function FacultyBrowser({ lang, people }: { lang: Lang; people: FacultyRe
               })}
         </p>
       ) : (
-        <ul className="mt-8 grid gap-4 md:grid-cols-2">
+        <ul className="mt-8 grid grid-cols-1 gap-4">
           {visible.map((person) => (
             <li key={person.id} id={person.id}>
               <FacultyCard person={person} lang={lang} />
@@ -92,21 +92,21 @@ export function FacultyBrowser({ lang, people }: { lang: Lang; people: FacultyRe
 
 function FacultyCard({ person, lang }: { person: FacultyRecord; lang: Lang }) {
   return (
-    <article className="interactive-card flex h-full gap-4 rounded-2xl border-border bg-cream p-5">
+    <article className="interactive-card flex w-full flex-col gap-5 rounded-2xl border-border bg-cream p-5 sm:flex-row sm:items-center sm:gap-8 sm:p-6">
       {person.image_url ? (
-        <img src={person.image_url} alt="" className="size-12 shrink-0 rounded-full object-cover" />
+        <img src={person.image_url} alt="" className="h-56 w-44 shrink-0 rounded-2xl object-cover object-top sm:h-64 sm:w-48" />
       ) : (
-        <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-ink font-display text-lg text-cream">
+        <div className="flex h-56 w-44 shrink-0 items-center justify-center rounded-2xl bg-ink font-display text-4xl text-cream sm:h-64 sm:w-48">
           {initials(person.name)}
         </div>
       )}
-      <div className="min-w-0">
-        <h2 className="font-sans text-lg font-semibold tracking-normal text-ink">{person.name}</h2>
-        {person.title ? <p className="mt-1 text-sm text-burgundy">{person.title}</p> : null}
-        {person.category ? <p className="mt-1 text-sm text-muted-foreground">{tx(lang, categoryLabel[person.category])}</p> : null}
-        {person.research_fields ? <p className="mt-3 text-sm leading-relaxed text-foreground">{person.research_fields}</p> : null}
-        {person.education ? <p className="mt-2 text-sm text-muted-foreground">{person.education}</p> : null}
-        <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-sm text-[#243044]">
+      <div className="min-w-0 flex-1">
+        <h2 className="font-sans text-2xl font-semibold tracking-normal text-ink sm:text-3xl">{person.name}</h2>
+        {person.title ? <p className="mt-2 text-lg text-burgundy">{person.title}</p> : null}
+        {person.category ? <p className="mt-1 text-lg text-[#243044]">{tx(lang, categoryLabel[person.category])}</p> : null}
+        {person.research_fields ? <p className="mt-4 text-lg leading-relaxed text-foreground">{person.research_fields}</p> : null}
+        {person.education ? <p className="mt-3 text-lg leading-relaxed text-[#243044]">{person.education}</p> : null}
+        <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-lg text-[#243044]">
           {person.phone ? <span>{person.phone}</span> : null}
           {person.email ? (
             <a className="underline underline-offset-2" href={`mailto:${person.email}`}>
@@ -114,7 +114,7 @@ function FacultyCard({ person, lang }: { person: FacultyRecord; lang: Lang }) {
             </a>
           ) : null}
           {person.website ? (
-            <ExternalLink href={person.website} className="text-sm">
+            <ExternalLink href={person.website} className="text-lg">
               {tx(lang, { en: "Personal website", zh: "個人網站" })}
             </ExternalLink>
           ) : null}
