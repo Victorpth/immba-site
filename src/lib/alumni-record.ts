@@ -19,7 +19,7 @@ export type AlumniRecord = {
 
 export type AlumniWrite = Omit<AlumniRecord, "id">;
 
-export type AlumniAuditAction = "CREATE" | "UPDATE" | "DELETE";
+export type AlumniAuditAction = "CREATE" | "UPDATE" | "DELETE" | "IMPORT";
 
 export type AlumniAuditLog = {
   id: string;

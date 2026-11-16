@@ -1,5 +1,6 @@
 "use client";
 
+import { parseAlumniCsv, type CsvPreview } from "@/lib/alumni-import";
 import {
   degreePrograms,
   type AlumniAuditLog,
@@ -8,7 +9,7 @@ import {
   type DegreeProgram,
 } from "@/lib/alumni-record";
 import { tx, type Lang } from "@/lib/i18n";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from "react";
 
 const fieldClass =
   "mt-2 w-full rounded-xl border border-input bg-white px-3 py-2 text-sm text-ink outline-none focus:border-burgundy";
@@ -57,11 +58,20 @@ const errorText: Record<string, { en: string; zh: string }> = {
   },
   load_failed: { en: "The alumni list could not be loaded.", zh: "校友名單無法載入。" },
   history_failed: { en: "The activity history could not be loaded.", zh: "操作紀錄無法載入。" },
+  duplicate_in_file: { en: "This student ID is repeated in the file.", zh: "這個學號在檔案中重複。" },
+  unreadable_csv: { en: "This file could not be read as CSV.", zh: "無法讀取這個 CSV 檔。" },
+  empty_file: { en: "The file has no alumni rows to import.", zh: "檔案裡沒有可匯入的校友列。" },
+  too_many_rows: { en: "The file has more than 1000 alumni rows.", zh: "檔案超過 1000 列校友。" },
+  import_failed: { en: "The alumni file could not be imported.", zh: "校友檔案無法匯入。" },
   unauthorized: { en: "Sign in again to change alumni records.", zh: "請重新登入後再修改校友。" },
   forbidden: { en: "This account cannot change alumni records.", zh: "這個帳號不能修改校友。" },
 };
 
 function message(lang: Lang, code: string) {
+  if (code.startsWith("missing_column:")) {
+    const column = code.slice("missing_column:".length);
+    return tx(lang, { en: `Missing required column: ${column}.`, zh: `缺少必填欄位：${column}。` });
+  }
   return tx(lang, errorText[code] ?? { en: "Something went wrong.", zh: "發生錯誤。" });
 }
 
@@ -127,6 +137,12 @@ function shownValue(value: unknown) {
 }
 
 function changedFields(log: AlumniAuditLog) {
+  if (log.action === "IMPORT") {
+    const filename = typeof log.new_data?.filename === "string" ? log.new_data.filename : (log.record_label ?? "—");
+    const count = log.new_data?.imported_count;
+    const imported = typeof count === "number" ? String(count) : "—";
+    return [`file : ${filename}`, `imported : ${imported}`];
+  }
   if (log.action !== "UPDATE" || !log.old_data || !log.new_data) return [];
   const keys = [...comparedFields];
   for (const key of [...Object.keys(log.old_data), ...Object.keys(log.new_data)]) {
@@ -193,6 +209,37 @@ function exportFileName() {
   return `alumni_export_${now.getFullYear()}-${month}-${day}.csv`;
 }
 
+const templateExample: Record<(typeof csvColumns)[number], string> = {
+  full_name: "Example Name",
+  student_id: "A12345678",
+  department: "Business Administration",
+  degree_program: "Master",
+  admission_year: "2022",
+  graduation_year: "2024",
+  email: "example@example.com",
+  phone: "0912345678",
+  company: "Example Company",
+  job_title: "Analyst",
+  notes: "Replace this example row.",
+};
+
+function templateCsv() {
+  const example = csvColumns.map((key) => csvCell(templateExample[key])).join(",");
+  return `\uFEFF${csvColumns.join(",")}\r\n${example}\r\n`;
+}
+
+function downloadCsv(filename: string, contents: string) {
+  const blob = new Blob([contents], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
 async function requestAlumni(path: string, init?: RequestInit) {
   const response = await fetch(path, {
     ...init,
@@ -224,6 +271,13 @@ export function AdminAlumni({ lang }: { lang: Lang }) {
   const [view, setView] = useState<"records" | "history">("records");
   const [logs, setLogs] = useState<AlumniAuditLog[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
+  const fileInput = useRef<HTMLInputElement>(null);
+  const [importReport, setImportReport] = useState<(CsvPreview & { filename: string }) | null>(null);
+  const [importSummary, setImportSummary] = useState<{
+    imported: number;
+    rejected: number;
+    serverIssues: { line: number; error: string }[];
+  } | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -274,15 +328,69 @@ export function AdminAlumni({ lang }: { lang: Lang }) {
   }
 
   function exportVisible() {
-    const blob = new Blob([alumniCsv(visible)], { type: "text/csv;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = exportFileName();
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    downloadCsv(exportFileName(), alumniCsv(visible));
+  }
+
+  function downloadTemplate() {
+    downloadCsv("alumni_import_template.csv", templateCsv());
+  }
+
+  async function onPickFile(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    setError("");
+    setNotice("");
+    setImportSummary(null);
+    try {
+      const text = await file.text();
+      setImportReport({ filename: file.name, ...parseAlumniCsv(text, items.map((person) => person.student_id)) });
+    } catch {
+      setError(message(lang, "unreadable_csv"));
+    }
+  }
+
+  async function confirmImport() {
+    if (!importReport) return;
+    const ready = importReport.rows.filter((row) => row.value);
+    const rejectedBefore = importReport.rows.length - ready.length;
+    setSaving(true);
+    setError("");
+    try {
+      const response = await fetch("/api/alumni/import", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          filename: importReport.filename,
+          rows: ready.map((row) => ({ line: row.line, ...row.value })),
+        }),
+      });
+      const body = (await response.json().catch(() => null)) as {
+        error?: string;
+        imported?: number;
+        rejected?: { line: number; error: string }[];
+      } | null;
+      if (!response.ok && body?.error !== "audit_failed") {
+        setError(message(lang, body?.error ?? "import_failed"));
+        return;
+      }
+      const imported = typeof body?.imported === "number" ? body.imported : 0;
+      const serverIssues = Array.isArray(body?.rejected) ? body.rejected : [];
+      if (imported > 0) {
+        try {
+          await reload();
+        } catch {
+          setError(message(lang, "load_failed"));
+        }
+      }
+      setImportSummary({ imported, rejected: rejectedBefore + serverIssues.length, serverIssues });
+      setImportReport(null);
+      if (body?.error === "audit_failed") setError(message(lang, "audit_failed"));
+    } catch {
+      setError(message(lang, "import_failed"));
+    } finally {
+      setSaving(false);
+    }
   }
 
   function openCreate() {
@@ -540,6 +648,13 @@ export function AdminAlumni({ lang }: { lang: Lang }) {
               <button type="button" onClick={exportVisible} className={actionButton}>
                 {tx(lang, { en: "Export CSV", zh: "匯出 CSV" })}
               </button>
+              <button type="button" onClick={downloadTemplate} className={actionButton}>
+                {tx(lang, { en: "Download CSV template", zh: "下載 CSV 範本" })}
+              </button>
+              <input ref={fileInput} type="file" accept=".csv,text/csv" className="hidden" onChange={onPickFile} />
+              <button type="button" onClick={() => fileInput.current?.click()} className={actionButton}>
+                {tx(lang, { en: "Import CSV", zh: "匯入 CSV" })}
+              </button>
             </div>
           </div>
           <p className="mt-4 text-sm text-muted-foreground">
@@ -719,6 +834,111 @@ export function AdminAlumni({ lang }: { lang: Lang }) {
               </button>
             </div>
           </form>
+        </div>
+      ) : null}
+
+      {importReport ? (
+        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-[#121a27]/45 p-4 sm:items-center">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="import-alumni-title"
+            className="my-auto w-full max-w-3xl rounded-2xl border border-border bg-cream p-5 shadow-xl sm:p-6"
+          >
+            <h2 id="import-alumni-title" className="text-3xl text-ink">
+              {tx(lang, { en: "Import CSV", zh: "匯入 CSV" })}
+            </h2>
+            <p className="mt-2 text-sm text-muted-foreground">{importReport.filename}</p>
+            {importReport.fileIssues.length > 0 ? (
+              <div className="mt-4 space-y-1 text-sm text-burgundy" role="alert">
+                {importReport.fileIssues.map((code) => (
+                  <p key={code}>{message(lang, code)}</p>
+                ))}
+              </div>
+            ) : null}
+            {importReport.unknownColumns.length > 0 ? (
+              <p className="mt-4 text-sm text-muted-foreground">
+                {tx(lang, {
+                  en: `Unrecognized columns were ignored: ${importReport.unknownColumns.join(", ")}.`,
+                  zh: `已略過未識別的欄位：${importReport.unknownColumns.join("、")}。`,
+                })}
+              </p>
+            ) : null}
+            {importReport.rows.length > 0 ? (
+              <>
+                <p className="mt-4 text-sm text-muted-foreground">
+                  {tx(lang, {
+                    en: `${importReport.rows.filter((row) => row.value).length} ready, ${importReport.rows.filter((row) => !row.value).length} rejected`,
+                    zh: `${importReport.rows.filter((row) => row.value).length} 筆可匯入，${importReport.rows.filter((row) => !row.value).length} 筆已拒絕`,
+                  })}
+                </p>
+                <ul className="mt-4 max-h-80 space-y-3 overflow-y-auto rounded-2xl border border-border bg-white p-4 text-sm">
+                  {importReport.rows.map((row) => (
+                    <li key={row.line} className={row.value ? "text-ink" : "text-burgundy"}>
+                      <span className="font-semibold">
+                        {tx(lang, { en: `Line ${row.line}`, zh: `第 ${row.line} 列` })}
+                        {" · "}
+                        {row.studentId || "—"}
+                        {" · "}
+                        {row.fullName || "—"}
+                      </span>
+                      <span className="mt-1 block">
+                        {row.issues.length === 0
+                          ? tx(lang, { en: "Ready to import.", zh: "可以匯入。" })
+                          : row.issues.map((code) => message(lang, code)).join(" ")}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            ) : null}
+            <div className="mt-6 flex flex-wrap items-center gap-3">
+              {importReport.fileIssues.length === 0 && importReport.rows.some((row) => row.value) ? (
+                <button type="button" disabled={saving} onClick={confirmImport} className={primaryButton}>
+                  {importReport.rows.some((row) => !row.value)
+                    ? tx(lang, { en: "Import valid rows only", zh: "只匯入有效的列" })
+                    : tx(lang, { en: "Import", zh: "匯入" })}
+                </button>
+              ) : null}
+              <button
+                type="button"
+                onClick={() => setImportReport(null)}
+                className="text-sm font-semibold text-ink underline decoration-[#c5d0dc] underline-offset-4 hover:text-[#1d4f86]"
+              >
+                {tx(lang, { en: "Cancel", zh: "取消" })}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {importSummary ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#121a27]/45 p-4">
+          <div role="dialog" aria-modal="true" aria-labelledby="import-summary-title" className="w-full max-w-md rounded-2xl bg-cream p-6 shadow-xl">
+            <h2 id="import-summary-title" className="text-2xl text-ink">
+              {tx(lang, { en: "Import complete", zh: "匯入完成" })}
+            </h2>
+            <p className="mt-3 text-sm font-medium text-ink">
+              {tx(lang, {
+                en: `${importSummary.imported} imported, ${importSummary.rejected} rejected.`,
+                zh: `已匯入 ${importSummary.imported} 筆，已拒絕 ${importSummary.rejected} 筆。`,
+              })}
+            </p>
+            {importSummary.serverIssues.length > 0 ? (
+              <ul className="mt-4 max-h-60 space-y-2 overflow-y-auto text-sm text-burgundy">
+                {importSummary.serverIssues.map((issue) => (
+                  <li key={`${issue.line}-${issue.error}`}>
+                    {tx(lang, { en: `Line ${issue.line}`, zh: `第 ${issue.line} 列` })}: {message(lang, issue.error)}
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+            <div className="mt-6">
+              <button type="button" onClick={() => setImportSummary(null)} className={primaryButton}>
+                {tx(lang, { en: "Close", zh: "關閉" })}
+              </button>
+            </div>
+          </div>
         </div>
       ) : null}
 

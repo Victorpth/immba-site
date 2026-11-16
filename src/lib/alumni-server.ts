@@ -1,7 +1,7 @@
 import "server-only";
 
 import { getAccess, isStaff } from "@/lib/auth-access";
-import { toAlumniRecord, type AlumniAuditLog, type AlumniRecord, type AlumniWrite } from "@/lib/alumni-record";
+import { parseAlumniWrite, toAlumniRecord, type AlumniAuditLog, type AlumniRecord, type AlumniWrite } from "@/lib/alumni-record";
 import { createSupabaseServer } from "@/lib/supabase-server";
 
 type Actor = { id: string; email: string | null };
@@ -61,8 +61,8 @@ async function fullAlumni(id: string) {
 
 async function writeAudit(entry: {
   actor: Actor;
-  action: "CREATE" | "UPDATE" | "DELETE";
-  recordId: string;
+  action: "CREATE" | "UPDATE" | "DELETE" | "IMPORT";
+  recordId: string | null;
   recordLabel: string;
   oldData: Record<string, unknown> | null;
   newData: Record<string, unknown> | null;
@@ -128,6 +128,58 @@ export async function updateAlumni(
   });
   if (!logged) return { ok: false, error: "audit_failed" };
   return { ok: true, record };
+}
+
+export type ImportRejection = { line: number; error: string };
+
+function cleanFilename(value: unknown) {
+  if (typeof value !== "string") return "";
+  const base = value.split(/[/\\]/).pop() ?? "";
+  return base.replace(/[\u0000-\u001f]/g, "").trim().slice(0, 180);
+}
+
+export async function importAlumniRows(
+  filename: string,
+  rows: { line: number; value: unknown }[],
+  actor: Actor,
+): Promise<{ imported: number; rejected: ImportRejection[]; auditFailed: boolean }> {
+  const taken = new Set((await listAlumni()).map((person) => person.student_id));
+  const seen = new Set<string>();
+  const rejected: ImportRejection[] = [];
+  let imported = 0;
+  const supabase = createSupabaseServer();
+
+  for (const row of rows) {
+    const parsed = parseAlumniWrite(row.value);
+    if (!parsed.ok) {
+      rejected.push({ line: row.line, error: parsed.error });
+      continue;
+    }
+    if (seen.has(parsed.value.student_id) || taken.has(parsed.value.student_id)) {
+      rejected.push({ line: row.line, error: "duplicate_student_id" });
+      continue;
+    }
+    const { error } = await supabase.from("alumni").insert(parsed.value);
+    if (error) {
+      rejected.push({ line: row.line, error: failure(error).error });
+      continue;
+    }
+    seen.add(parsed.value.student_id);
+    taken.add(parsed.value.student_id);
+    imported += 1;
+  }
+
+  if (imported === 0) return { imported, rejected, auditFailed: false };
+  const label = cleanFilename(filename) || "alumni.csv";
+  const logged = await writeAudit({
+    actor,
+    action: "IMPORT",
+    recordId: null,
+    recordLabel: label,
+    oldData: null,
+    newData: { filename: label, imported_count: imported },
+  });
+  return { imported, rejected, auditFailed: !logged };
 }
 
 export async function deleteAlumni(id: string, actor: Actor): Promise<{ ok: true } | WriteFailure> {
