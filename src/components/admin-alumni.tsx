@@ -152,6 +152,47 @@ function formatWhen(lang: Lang, iso: string) {
   }).format(date);
 }
 
+const csvColumns = [
+  "full_name",
+  "student_id",
+  "department",
+  "degree_program",
+  "admission_year",
+  "graduation_year",
+  "email",
+  "phone",
+  "company",
+  "job_title",
+  "notes",
+] as const satisfies readonly (keyof AlumniRecord)[];
+
+function csvCell(value: string) {
+  if (/[",\r\n]/.test(value)) return `"${value.replaceAll('"', '""')}"`;
+  return value;
+}
+
+function alumniCsv(rows: AlumniRecord[]) {
+  const lines = [
+    csvColumns.join(","),
+    ...rows.map((person) =>
+      csvColumns
+        .map((key) => {
+          const value = person[key];
+          return csvCell(value === null ? "" : String(value));
+        })
+        .join(","),
+    ),
+  ];
+  return `\uFEFF${lines.join("\r\n")}\r\n`;
+}
+
+function exportFileName() {
+  const now = new Date();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `alumni_export_${now.getFullYear()}-${month}-${day}.csv`;
+}
+
 async function requestAlumni(path: string, init?: RequestInit) {
   const response = await fetch(path, {
     ...init,
@@ -230,6 +271,18 @@ export function AdminAlumni({ lang }: { lang: Lang }) {
     setGraduationYear("");
     setDepartment("");
     setCompany("");
+  }
+
+  function exportVisible() {
+    const blob = new Blob([alumniCsv(visible)], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = exportFileName();
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
 
   function openCreate() {
@@ -480,9 +533,12 @@ export function AdminAlumni({ lang }: { lang: Lang }) {
                 ))}
               </select>
             </label>
-            <div className="flex items-end">
+            <div className="flex flex-wrap items-end gap-2">
               <button type="button" onClick={resetFilters} className={actionButton}>
                 {tx(lang, { en: "Reset filters", zh: "清除篩選" })}
+              </button>
+              <button type="button" onClick={exportVisible} className={actionButton}>
+                {tx(lang, { en: "Export CSV", zh: "匯出 CSV" })}
               </button>
             </div>
           </div>
