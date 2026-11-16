@@ -1,11 +1,10 @@
-import { requireStaff } from "@/lib/auth-access";
 import { parseAlumniWrite } from "@/lib/alumni-record";
-import { insertAlumni, listAlumni } from "@/lib/alumni-server";
+import { alumniActor, insertAlumni, listAlumni } from "@/lib/alumni-server";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const guard = await requireStaff();
+  const guard = await alumniActor();
   if (!guard.ok) return Response.json({ error: guard.error }, { status: guard.status });
   try {
     return Response.json(await listAlumni());
@@ -15,7 +14,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const guard = await requireStaff();
+  const guard = await alumniActor();
   if (!guard.ok) return Response.json({ error: guard.error }, { status: guard.status });
 
   let body: unknown;
@@ -29,7 +28,7 @@ export async function POST(request: Request) {
   if (!parsed.ok) return Response.json({ error: parsed.error }, { status: 400 });
 
   try {
-    const saved = await insertAlumni(parsed.value);
+    const saved = await insertAlumni(parsed.value, guard.actor);
     if (!saved.ok) {
       const status = saved.error === "duplicate_student_id" ? 409 : 500;
       return Response.json({ error: saved.error }, { status });

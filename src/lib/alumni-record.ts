@@ -19,6 +19,18 @@ export type AlumniRecord = {
 
 export type AlumniWrite = Omit<AlumniRecord, "id">;
 
+export type AlumniAuditAction = "CREATE" | "UPDATE" | "DELETE";
+
+export type AlumniAuditLog = {
+  id: string;
+  created_at: string;
+  admin_email: string | null;
+  action: AlumniAuditAction | string;
+  record_label: string | null;
+  old_data: Record<string, unknown> | null;
+  new_data: Record<string, unknown> | null;
+};
+
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export function isAlumniId(value: string) {

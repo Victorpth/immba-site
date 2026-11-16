@@ -1,6 +1,12 @@
 "use client";
 
-import { degreePrograms, type AlumniRecord, type AlumniWrite, type DegreeProgram } from "@/lib/alumni-record";
+import {
+  degreePrograms,
+  type AlumniAuditLog,
+  type AlumniRecord,
+  type AlumniWrite,
+  type DegreeProgram,
+} from "@/lib/alumni-record";
 import { tx, type Lang } from "@/lib/i18n";
 import { FormEvent, useEffect, useState } from "react";
 
@@ -45,7 +51,12 @@ const errorText: Record<string, { en: string; zh: string }> = {
   invalid_request: { en: "Check the form and try again.", zh: "請檢查表單後再試一次。" },
   not_found: { en: "That alumni record no longer exists.", zh: "找不到這筆校友資料。" },
   save_failed: { en: "The alumni record could not be saved.", zh: "校友資料無法儲存。" },
+  audit_failed: {
+    en: "The alumni record changed, but the activity log could not be written.",
+    zh: "校友資料已變更，但無法寫入操作紀錄。",
+  },
   load_failed: { en: "The alumni list could not be loaded.", zh: "校友名單無法載入。" },
+  history_failed: { en: "The activity history could not be loaded.", zh: "操作紀錄無法載入。" },
   unauthorized: { en: "Sign in again to change alumni records.", zh: "請重新登入後再修改校友。" },
   forbidden: { en: "This account cannot change alumni records.", zh: "這個帳號不能修改校友。" },
 };
@@ -95,6 +106,52 @@ function toWrite(form: FormState): AlumniWrite {
   };
 }
 
+const comparedFields = [
+  "full_name",
+  "student_id",
+  "department",
+  "degree_program",
+  "admission_year",
+  "graduation_year",
+  "email",
+  "phone",
+  "company",
+  "job_title",
+  "notes",
+];
+
+function shownValue(value: unknown) {
+  if (value === null || value === undefined || value === "") return "—";
+  if (typeof value === "object") return JSON.stringify(value);
+  return String(value);
+}
+
+function changedFields(log: AlumniAuditLog) {
+  if (log.action !== "UPDATE" || !log.old_data || !log.new_data) return [];
+  const keys = [...comparedFields];
+  for (const key of [...Object.keys(log.old_data), ...Object.keys(log.new_data)]) {
+    if (!keys.includes(key) && key !== "id" && key !== "created_at" && key !== "updated_at") keys.push(key);
+  }
+  return keys.flatMap((key) => {
+    const before = shownValue(log.old_data?.[key]);
+    const after = shownValue(log.new_data?.[key]);
+    if (before === after) return [];
+    return [`${key} : ${before} → ${after}`];
+  });
+}
+
+function formatWhen(lang: Lang, iso: string) {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return iso;
+  return new Intl.DateTimeFormat(lang === "zh" ? "zh-TW" : "en-GB", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
+}
+
 async function requestAlumni(path: string, init?: RequestInit) {
   const response = await fetch(path, {
     ...init,
@@ -118,6 +175,9 @@ export function AdminAlumni({ lang }: { lang: Lang }) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [view, setView] = useState<"records" | "history">("records");
+  const [logs, setLogs] = useState<AlumniAuditLog[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -161,6 +221,31 @@ export function AdminAlumni({ lang }: { lang: Lang }) {
     setItems(Array.isArray(body) ? body : []);
   }
 
+  async function openHistory() {
+    setView("history");
+    setHistoryLoading(true);
+    setError("");
+    try {
+      const body = await requestAlumni("/api/alumni/audit");
+      setLogs(Array.isArray(body) ? body : []);
+    } catch (reason) {
+      setError(message(lang, reason instanceof Error ? reason.message : "history_failed"));
+    } finally {
+      setHistoryLoading(false);
+    }
+  }
+
+  async function afterAuditFailure() {
+    try {
+      await reload();
+    } catch {
+      setError(message(lang, "load_failed"));
+    }
+    setShowForm(false);
+    setEditingId(null);
+    setPendingDelete(null);
+  }
+
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
     if (!form.full_name.trim()) {
@@ -195,7 +280,9 @@ export function AdminAlumni({ lang }: { lang: Lang }) {
       setEditingId(null);
       setNotice(tx(lang, { en: "Saved.", zh: "已儲存。" }));
     } catch (reason) {
-      setError(message(lang, reason instanceof Error ? reason.message : "save_failed"));
+      const code = reason instanceof Error ? reason.message : "save_failed";
+      if (code === "audit_failed") await afterAuditFailure();
+      setError(message(lang, code));
     } finally {
       setSaving(false);
     }
@@ -211,7 +298,9 @@ export function AdminAlumni({ lang }: { lang: Lang }) {
       await reload();
       setNotice(tx(lang, { en: "Deleted.", zh: "已刪除。" }));
     } catch (reason) {
-      setError(message(lang, reason instanceof Error ? reason.message : "save_failed"));
+      const code = reason instanceof Error ? reason.message : "save_failed";
+      if (code === "audit_failed") await afterAuditFailure();
+      setError(message(lang, code));
     } finally {
       setSaving(false);
     }
@@ -219,7 +308,25 @@ export function AdminAlumni({ lang }: { lang: Lang }) {
 
   return (
     <section className="site-wrap py-14">
-      <div className="flex flex-wrap items-center justify-end gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => setView("records")}
+            className={view === "records" ? primaryButton : actionButton}
+            aria-current={view === "records" ? "page" : undefined}
+          >
+            {tx(lang, { en: "Alumni", zh: "校友" })}
+          </button>
+          <button
+            type="button"
+            onClick={openHistory}
+            className={view === "history" ? primaryButton : actionButton}
+            aria-current={view === "history" ? "page" : undefined}
+          >
+            {tx(lang, { en: "Activity history", zh: "操作紀錄" })}
+          </button>
+        </div>
         <button type="button" onClick={openCreate} className={primaryButton}>
           {tx(lang, { en: "Add alumni", zh: "新增校友" })}
         </button>
@@ -235,7 +342,51 @@ export function AdminAlumni({ lang }: { lang: Lang }) {
         </p>
       ) : null}
 
-      {loading ? (
+      {view === "history" ? (
+        historyLoading ? (
+          <p className="mt-8 text-sm text-muted-foreground">{tx(lang, { en: "Loading activity…", zh: "正在載入操作紀錄…" })}</p>
+        ) : logs.length === 0 ? (
+          <p className="mt-8 rounded-2xl border border-dashed border-border px-6 py-12 text-center text-sm text-muted-foreground">
+            {tx(lang, { en: "No activity has been recorded yet.", zh: "目前沒有操作紀錄。" })}
+          </p>
+        ) : (
+          <div className="mt-8 overflow-x-auto rounded-2xl border border-border bg-cream">
+            <table className="w-full min-w-[48rem] text-left text-sm">
+              <thead className="border-b border-border text-xs tracking-wide text-muted-foreground uppercase">
+                <tr>
+                  <th className="px-4 py-3 font-semibold">{tx(lang, { en: "When", zh: "時間" })}</th>
+                  <th className="px-4 py-3 font-semibold">{tx(lang, { en: "Admin", zh: "管理員" })}</th>
+                  <th className="px-4 py-3 font-semibold">{tx(lang, { en: "Action", zh: "動作" })}</th>
+                  <th className="px-4 py-3 font-semibold">{tx(lang, { en: "Student ID", zh: "學號" })}</th>
+                  <th className="px-4 py-3 font-semibold">{tx(lang, { en: "Changes", zh: "變更" })}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {logs.map((log) => {
+                  const changes = changedFields(log);
+                  return (
+                    <tr key={log.id} className="border-b border-border last:border-b-0">
+                      <td className="px-4 py-4 align-top whitespace-nowrap text-ink">{formatWhen(lang, log.created_at)}</td>
+                      <td className="px-4 py-4 align-top text-ink">{log.admin_email ?? "—"}</td>
+                      <td className="px-4 py-4 align-top font-semibold text-ink">{log.action}</td>
+                      <td className="px-4 py-4 align-top text-ink">{log.record_label ?? "—"}</td>
+                      <td className="px-4 py-4 align-top text-ink">
+                        {changes.length === 0
+                          ? "—"
+                          : changes.map((line) => (
+                              <span key={line} className="block">
+                                {line}
+                              </span>
+                            ))}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )
+      ) : loading ? (
         <p className="mt-8 text-sm text-muted-foreground">{tx(lang, { en: "Loading alumni…", zh: "正在載入校友…" })}</p>
       ) : items.length === 0 ? (
         <p className="mt-8 rounded-2xl border border-dashed border-border px-6 py-12 text-center text-sm text-muted-foreground">
