@@ -8,7 +8,7 @@ import {
   type DegreeProgram,
 } from "@/lib/alumni-record";
 import { tx, type Lang } from "@/lib/i18n";
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 
 const fieldClass =
   "mt-2 w-full rounded-xl border border-input bg-white px-3 py-2 text-sm text-ink outline-none focus:border-burgundy";
@@ -175,6 +175,11 @@ export function AdminAlumni({ lang }: { lang: Lang }) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [query, setQuery] = useState("");
+  const [degree, setDegree] = useState<"" | DegreeProgram>("");
+  const [graduationYear, setGraduationYear] = useState("");
+  const [department, setDepartment] = useState("");
+  const [company, setCompany] = useState("");
   const [view, setView] = useState<"records" | "history">("records");
   const [logs, setLogs] = useState<AlumniAuditLog[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
@@ -195,6 +200,37 @@ export function AdminAlumni({ lang }: { lang: Lang }) {
       active = false;
     };
   }, [lang]);
+
+  const filterOptions = useMemo(() => {
+    const unique = (values: string[]) => [...new Set(values.filter(Boolean))].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+    return {
+      years: unique(items.flatMap((person) => (person.graduation_year === null ? [] : [String(person.graduation_year)]))).sort(
+        (a, b) => Number(b) - Number(a),
+      ),
+      departments: unique(items.map((person) => person.department)),
+      companies: unique(items.flatMap((person) => (person.company ? [person.company] : []))),
+    };
+  }, [items]);
+
+  const visible = useMemo(() => {
+    const needle = query.trim().toLowerCase();
+    return items.filter((person) => {
+      if (needle && !person.full_name.toLowerCase().includes(needle)) return false;
+      if (degree && person.degree_program !== degree) return false;
+      if (graduationYear && String(person.graduation_year ?? "") !== graduationYear) return false;
+      if (department && person.department !== department) return false;
+      if (company && person.company !== company) return false;
+      return true;
+    });
+  }, [items, query, degree, graduationYear, department, company]);
+
+  function resetFilters() {
+    setQuery("");
+    setDegree("");
+    setGraduationYear("");
+    setDepartment("");
+    setCompany("");
+  }
 
   function openCreate() {
     setEditingId(null);
@@ -388,12 +424,82 @@ export function AdminAlumni({ lang }: { lang: Lang }) {
         )
       ) : loading ? (
         <p className="mt-8 text-sm text-muted-foreground">{tx(lang, { en: "Loading alumni…", zh: "正在載入校友…" })}</p>
-      ) : items.length === 0 ? (
-        <p className="mt-8 rounded-2xl border border-dashed border-border px-6 py-12 text-center text-sm text-muted-foreground">
-          {tx(lang, { en: "No alumni are listed yet.", zh: "目前沒有校友資料。" })}
-        </p>
       ) : (
-        <div className="mt-8 overflow-x-auto rounded-2xl border border-border bg-cream">
+        <>
+          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <label className="block text-sm font-semibold text-ink">
+              {tx(lang, { en: "Search by name", zh: "依姓名搜尋" })}
+              <input
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder={tx(lang, { en: "Name", zh: "姓名" })}
+                className={fieldClass}
+              />
+            </label>
+            <label className="block text-sm font-semibold text-ink">
+              {tx(lang, { en: "Degree", zh: "學位" })}
+              <select value={degree} onChange={(event) => setDegree(event.target.value as "" | DegreeProgram)} className={fieldClass}>
+                <option value="">{tx(lang, { en: "All", zh: "全部" })}</option>
+                {degreePrograms.map((program) => (
+                  <option key={program} value={program}>
+                    {tx(lang, degreeLabel[program])}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="block text-sm font-semibold text-ink">
+              {tx(lang, { en: "Graduation year", zh: "畢業年" })}
+              <select value={graduationYear} onChange={(event) => setGraduationYear(event.target.value)} className={fieldClass}>
+                <option value="">{tx(lang, { en: "All", zh: "全部" })}</option>
+                {filterOptions.years.map((year) => (
+                  <option key={year} value={year}>
+                    {year}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="block text-sm font-semibold text-ink">
+              {tx(lang, { en: "Department", zh: "系所" })}
+              <select value={department} onChange={(event) => setDepartment(event.target.value)} className={fieldClass}>
+                <option value="">{tx(lang, { en: "All", zh: "全部" })}</option>
+                {filterOptions.departments.map((value) => (
+                  <option key={value} value={value}>
+                    {value}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="block text-sm font-semibold text-ink">
+              {tx(lang, { en: "Company", zh: "公司" })}
+              <select value={company} onChange={(event) => setCompany(event.target.value)} className={fieldClass}>
+                <option value="">{tx(lang, { en: "All", zh: "全部" })}</option>
+                {filterOptions.companies.map((value) => (
+                  <option key={value} value={value}>
+                    {value}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <div className="flex items-end">
+              <button type="button" onClick={resetFilters} className={actionButton}>
+                {tx(lang, { en: "Reset filters", zh: "清除篩選" })}
+              </button>
+            </div>
+          </div>
+          <p className="mt-4 text-sm text-muted-foreground">
+            {tx(lang, {
+              en: `${visible.length} of ${items.length} alumni`,
+              zh: `${visible.length} / ${items.length} 位校友`,
+            })}
+          </p>
+          {visible.length === 0 ? (
+            <p className="mt-4 rounded-2xl border border-dashed border-border px-6 py-12 text-center text-sm text-muted-foreground">
+              {items.length === 0
+                ? tx(lang, { en: "No alumni are listed yet.", zh: "目前沒有校友資料。" })
+                : tx(lang, { en: "No alumni match these filters.", zh: "沒有符合這些條件的校友。" })}
+            </p>
+          ) : (
+        <div className="mt-4 overflow-x-auto rounded-2xl border border-border bg-cream">
           <table className="w-full min-w-[64rem] text-left text-sm">
             <thead className="border-b border-border text-xs tracking-wide text-muted-foreground uppercase">
               <tr>
@@ -408,7 +514,7 @@ export function AdminAlumni({ lang }: { lang: Lang }) {
               </tr>
             </thead>
             <tbody>
-              {items.map((person) => (
+              {visible.map((person) => (
                 <tr key={person.id} className="border-b border-border last:border-b-0">
                   <td className="px-4 py-4 align-top font-semibold text-ink">{person.full_name}</td>
                   <td className="px-4 py-4 align-top text-ink">{person.student_id}</td>
@@ -451,6 +557,8 @@ export function AdminAlumni({ lang }: { lang: Lang }) {
             </tbody>
           </table>
         </div>
+          )}
+        </>
       )}
 
       {showForm ? (
