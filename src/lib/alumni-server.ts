@@ -150,11 +150,28 @@ export async function importAlumniRows(
   const supabase = createSupabaseServer();
 
   for (const row of rows) {
-    const parsed = parseAlumniWrite(row.value);
+    const source = row.value && typeof row.value === "object" && !Array.isArray(row.value) ? { ...(row.value as Record<string, unknown>) } : null;
+    if (!source) {
+      rejected.push({ line: row.line, error: "invalid_request" });
+      continue;
+    }
+    const holdYear = (key: "admission_year" | "graduation_year") => {
+      const year = source[key];
+      if (typeof year === "number" && Number.isInteger(year) && year >= 2101 && year <= 2110) {
+        source[key] = null;
+        return year;
+      }
+      return null;
+    };
+    const admissionYear = holdYear("admission_year");
+    const graduationYear = holdYear("graduation_year");
+    const parsed = parseAlumniWrite(source);
     if (!parsed.ok) {
       rejected.push({ line: row.line, error: parsed.error });
       continue;
     }
+    if (admissionYear !== null) parsed.value.admission_year = admissionYear;
+    if (graduationYear !== null) parsed.value.graduation_year = graduationYear;
     if (seen.has(parsed.value.student_id) || taken.has(parsed.value.student_id)) {
       rejected.push({ line: row.line, error: "duplicate_student_id" });
       continue;

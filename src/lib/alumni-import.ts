@@ -40,6 +40,7 @@ export type CsvRowReport = {
   fullName: string;
   studentId: string;
   issues: string[];
+  conversions: string[];
   value: AlumniWrite | null;
 };
 
@@ -78,18 +79,24 @@ function degreeValue(value: string) {
   return degreeNames[key] ?? value.trim();
 }
 
-function yearInvalid(value: string) {
-  if (!value.trim()) return false;
-  if (!/^\d+$/.test(value.trim())) return true;
-  const year = Number(value);
-  return year < 1900 || year > 2100;
+function readCsvYear(value: string): { ok: true; year: string; note: string | null } | { ok: false } {
+  const trimmed = value.trim();
+  if (!trimmed) return { ok: true, year: "", note: null };
+  if (!/^\d+$/.test(trimmed)) return { ok: false };
+  const year = Number(trimmed);
+  if (year >= 1 && year <= 199) {
+    const gregorian = year + 1911;
+    return { ok: true, year: String(gregorian), note: `${trimmed} → ${gregorian}` };
+  }
+  if (year >= 1900 && year <= 2100) return { ok: true, year: String(year), note: null };
+  return { ok: false };
 }
 
 function pushIssue(issues: string[], code: string) {
   if (!issues.includes(code)) issues.push(code);
 }
 
-function rowIssues(raw: Record<string, string>) {
+function rowIssues(raw: Record<string, string>, yearsOk: boolean) {
   const issues: string[] = [];
   const fullName = raw.full_name.trim();
   const studentId = raw.student_id.trim();
@@ -102,7 +109,7 @@ function rowIssues(raw: Record<string, string>) {
   if (!department) pushIssue(issues, "department_required");
   else if (department.length > 200) pushIssue(issues, "invalid_request");
   if (!degreePrograms.includes(degree as DegreeProgram)) pushIssue(issues, "invalid_degree");
-  if (yearInvalid(raw.admission_year) || yearInvalid(raw.graduation_year)) pushIssue(issues, "invalid_year");
+  if (!yearsOk) pushIssue(issues, "invalid_csv_year");
   const email = raw.email.trim();
   if (
     email.length > 320 ||
@@ -186,22 +193,45 @@ export function parseAlumniCsv(text: string, existingStudentIds: Iterable<string
   const existing = new Set(existingStudentIds);
 
   const rows = drafts.map(({ line, raw }) => {
-    const issues = rowIssues(raw);
+    const admission = readCsvYear(raw.admission_year);
+    const graduation = readCsvYear(raw.graduation_year);
+    const issues = rowIssues(raw, admission.ok && graduation.ok);
     const studentId = raw.student_id.trim();
     if (studentId && (repeats.get(studentId) ?? 0) > 1) issues.push("duplicate_in_file");
     if (studentId && existing.has(studentId)) issues.push("duplicate_student_id");
+    const conversions = [
+      admission.ok && admission.note ? `admission_year ${admission.note}` : "",
+      graduation.ok && graduation.note ? `graduation_year ${graduation.note}` : "",
+    ].filter(Boolean);
     const payload = {
       ...raw,
       degree_program: degreeValue(raw.degree_program),
+      admission_year: admission.ok ? admission.year : raw.admission_year,
+      graduation_year: graduation.ok ? graduation.year : raw.graduation_year,
     };
-    const parsedRow = parseAlumniWrite(payload);
-    if (!parsedRow.ok && !issues.includes(parsedRow.error)) issues.push(parsedRow.error);
+    const parsedRow = parseAlumniWrite({
+      ...payload,
+      admission_year: admission.ok && Number(admission.year) > 2100 ? "" : payload.admission_year,
+      graduation_year: graduation.ok && Number(graduation.year) > 2100 ? "" : payload.graduation_year,
+    });
+    if (!parsedRow.ok && !(parsedRow.error === "invalid_year" && issues.includes("invalid_csv_year")) && !issues.includes(parsedRow.error)) {
+      issues.push(parsedRow.error);
+    }
+    const value =
+      issues.length === 0 && parsedRow.ok
+        ? {
+            ...parsedRow.value,
+            admission_year: admission.ok && admission.year ? Number(admission.year) : null,
+            graduation_year: graduation.ok && graduation.year ? Number(graduation.year) : null,
+          }
+        : null;
     return {
       line,
       fullName: raw.full_name.trim(),
       studentId,
       issues,
-      value: issues.length === 0 && parsedRow.ok ? parsedRow.value : null,
+      conversions,
+      value,
     };
   });
 

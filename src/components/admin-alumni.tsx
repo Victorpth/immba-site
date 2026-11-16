@@ -59,6 +59,10 @@ const errorText: Record<string, { en: string; zh: string }> = {
   load_failed: { en: "The alumni list could not be loaded.", zh: "校友名單無法載入。" },
   history_failed: { en: "The activity history could not be loaded.", zh: "操作紀錄無法載入。" },
   duplicate_in_file: { en: "This student ID is repeated in the file.", zh: "這個學號在檔案中重複。" },
+  invalid_csv_year: {
+    en: "Use a year from 1900 to 2100, or a ROC year from 1 to 199.",
+    zh: "請填西元 1900 至 2100，或民國 1 至 199。",
+  },
   unreadable_csv: { en: "This file could not be read as CSV.", zh: "無法讀取這個 CSV 檔。" },
   empty_file: { en: "The file has no alumni rows to import.", zh: "檔案裡沒有可匯入的校友列。" },
   too_many_rows: { en: "The file has more than 1000 alumni rows.", zh: "檔案超過 1000 列校友。" },
@@ -886,6 +890,7 @@ export function AdminAlumni({ lang }: { lang: Lang }) {
                         {row.issues.length === 0
                           ? tx(lang, { en: "Ready to import.", zh: "可以匯入。" })
                           : row.issues.map((code) => message(lang, code)).join(" ")}
+                        {row.conversions.length > 0 ? ` ${row.conversions.join(" ")}` : ""}
                       </span>
                     </li>
                   ))}
