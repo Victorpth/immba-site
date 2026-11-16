@@ -191,11 +191,29 @@ function csvCell(value: string) {
   return value;
 }
 
-function alumniCsv(rows: AlumniRecord[]) {
+const tableColumns = [
+  { key: "full_name", label: { en: "Name", zh: "姓名" } },
+  { key: "student_id", label: { en: "Student ID", zh: "學號" } },
+  { key: "department", label: { en: "Department", zh: "系所" } },
+  { key: "degree_program", label: { en: "Degree", zh: "學位" } },
+  { key: "admission_year", label: { en: "Admission Year", zh: "入學年" } },
+  { key: "graduation_year", label: { en: "Graduation Year", zh: "畢業年" } },
+  { key: "email", label: { en: "Email", zh: "電子郵件" } },
+  { key: "phone", label: { en: "Phone", zh: "電話" } },
+  { key: "company", label: { en: "Company", zh: "公司" } },
+  { key: "job_title", label: { en: "Job Title", zh: "職稱" } },
+  { key: "notes", label: { en: "Notes", zh: "備註" } },
+] as const satisfies readonly { key: (typeof csvColumns)[number]; label: { en: string; zh: string } }[];
+
+type ColumnKey = (typeof tableColumns)[number]["key"];
+
+const defaultColumnKeys: ColumnKey[] = ["full_name", "department", "graduation_year", "company"];
+
+function alumniCsv(rows: AlumniRecord[], columns: readonly ColumnKey[]) {
   const lines = [
-    csvColumns.join(","),
+    columns.join(","),
     ...rows.map((person) =>
-      csvColumns
+      columns
         .map((key) => {
           const value = person[key];
           return csvCell(value === null ? "" : String(value));
@@ -282,6 +300,8 @@ export function AdminAlumni({ lang }: { lang: Lang }) {
     rejected: number;
     serverIssues: { line: number; error: string }[];
   } | null>(null);
+  const [shownColumns, setShownColumns] = useState<Set<ColumnKey>>(() => new Set(defaultColumnKeys));
+  const [columnsOpen, setColumnsOpen] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -332,7 +352,17 @@ export function AdminAlumni({ lang }: { lang: Lang }) {
   }
 
   function exportVisible() {
-    downloadCsv(exportFileName(), alumniCsv(visible));
+    const columns = tableColumns.filter((column) => shownColumns.has(column.key)).map((column) => column.key);
+    downloadCsv(exportFileName(), alumniCsv(visible, columns));
+  }
+
+  function toggleColumn(key: ColumnKey) {
+    setShownColumns((current) => {
+      const next = new Set(current);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
   }
 
   function downloadTemplate() {
@@ -667,6 +697,31 @@ export function AdminAlumni({ lang }: { lang: Lang }) {
               zh: `${visible.length} / ${items.length} 位校友`,
             })}
           </p>
+          <div className="mt-4">
+            <button
+              type="button"
+              onClick={() => setColumnsOpen((open) => !open)}
+              className={actionButton}
+              aria-expanded={columnsOpen}
+            >
+              {tx(lang, { en: "Columns", zh: "欄位" })}
+            </button>
+            {columnsOpen ? (
+              <div className="mt-3 grid gap-2 rounded-2xl border border-border bg-cream p-4 sm:grid-cols-2 lg:grid-cols-3">
+                {tableColumns.map((column) => (
+                  <label key={column.key} className="flex items-center gap-2 text-sm font-semibold text-ink">
+                    <input
+                      type="checkbox"
+                      checked={shownColumns.has(column.key)}
+                      onChange={() => toggleColumn(column.key)}
+                      className="size-4 accent-burgundy"
+                    />
+                    {tx(lang, column.label)}
+                  </label>
+                ))}
+              </div>
+            ) : null}
+          </div>
           {visible.length === 0 ? (
             <p className="mt-4 rounded-2xl border border-dashed border-border px-6 py-12 text-center text-sm text-muted-foreground">
               {items.length === 0
@@ -675,44 +730,45 @@ export function AdminAlumni({ lang }: { lang: Lang }) {
             </p>
           ) : (
         <div className="mt-4 overflow-x-auto rounded-2xl border border-border bg-cream">
-          <table className="w-full min-w-[64rem] text-left text-sm">
+          <table className="w-full text-left text-sm">
             <thead className="border-b border-border text-xs tracking-wide text-muted-foreground uppercase">
               <tr>
-                <th className="px-4 py-3 font-semibold">{tx(lang, { en: "Name", zh: "姓名" })}</th>
-                <th className="px-4 py-3 font-semibold">{tx(lang, { en: "Student ID", zh: "學號" })}</th>
-                <th className="px-4 py-3 font-semibold">{tx(lang, { en: "Department", zh: "系所" })}</th>
-                <th className="px-4 py-3 font-semibold">{tx(lang, { en: "Degree", zh: "學位" })}</th>
-                <th className="px-4 py-3 font-semibold">{tx(lang, { en: "Years", zh: "年份" })}</th>
-                <th className="px-4 py-3 font-semibold">{tx(lang, { en: "Work", zh: "工作" })}</th>
-                <th className="px-4 py-3 font-semibold">{tx(lang, { en: "Contact", zh: "聯絡" })}</th>
+                {tableColumns
+                  .filter((column) => shownColumns.has(column.key))
+                  .map((column) => (
+                    <th key={column.key} className="px-4 py-3 font-semibold">
+                      {tx(lang, column.label)}
+                    </th>
+                  ))}
                 <th className="px-4 py-3 font-semibold">{tx(lang, { en: "Actions", zh: "操作" })}</th>
               </tr>
             </thead>
             <tbody>
               {visible.map((person) => (
                 <tr key={person.id} className="border-b border-border last:border-b-0">
-                  <td className="px-4 py-4 align-top font-semibold text-ink">{person.full_name}</td>
-                  <td className="px-4 py-4 align-top text-ink">{person.student_id}</td>
-                  <td className="px-4 py-4 align-top text-ink">{person.department}</td>
-                  <td className="px-4 py-4 align-top text-ink">{tx(lang, degreeLabel[person.degree_program])}</td>
-                  <td className="px-4 py-4 align-top text-ink">
-                    {person.admission_year ?? "—"} – {person.graduation_year ?? "—"}
-                  </td>
-                  <td className="px-4 py-4 align-top text-ink">
-                    {person.company || person.job_title ? (
-                      <>
-                        {person.job_title ? <span className="block">{person.job_title}</span> : null}
-                        {person.company ? <span className="block text-muted-foreground">{person.company}</span> : null}
-                      </>
-                    ) : (
-                      "—"
-                    )}
-                  </td>
-                  <td className="px-4 py-4 align-top text-ink">
-                    {person.email ? <span className="block">{person.email}</span> : null}
-                    {person.phone ? <span className="block">{person.phone}</span> : null}
-                    {!person.email && !person.phone ? "—" : null}
-                  </td>
+                  {tableColumns
+                    .filter((column) => shownColumns.has(column.key))
+                    .map((column) => {
+                      const value = person[column.key];
+                      const text =
+                        column.key === "degree_program"
+                          ? tx(lang, degreeLabel[person.degree_program])
+                          : value === null || value === ""
+                            ? "—"
+                            : String(value);
+                      return (
+                        <td
+                          key={column.key}
+                          className={
+                            column.key === "full_name"
+                              ? "px-4 py-4 align-top font-semibold text-ink"
+                              : "px-4 py-4 align-top text-ink"
+                          }
+                        >
+                          {text}
+                        </td>
+                      );
+                    })}
                   <td className="px-4 py-4 align-top">
                     <div className="flex flex-wrap gap-2">
                       <button type="button" onClick={() => openEdit(person)} className={actionButton}>
