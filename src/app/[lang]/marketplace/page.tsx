@@ -1,6 +1,10 @@
+import { MarketplacePhoto } from "@/components/marketplace-photo";
 import { PageIntro } from "@/components/page-intro";
 import { ActionLink, TextLink } from "@/components/site-links";
+import { getAccess } from "@/lib/auth-access";
 import { isLang, tx, withLang } from "@/lib/i18n";
+import { stockLabel, type ListingRecord } from "@/lib/marketplace-record";
+import { listActiveListings } from "@/lib/marketplace-server";
 import { pageMeta } from "@/lib/meta";
 import { notFound } from "next/navigation";
 
@@ -10,14 +14,35 @@ const description = {
   zh: "國際經管學生每學期如何取得書籍與上課教材。",
 };
 
+export const dynamic = "force-dynamic";
+
 export function generateMetadata({ params }: { params: Promise<{ lang: string }> }) {
   return pageMeta(params, title, description);
+}
+
+function formatTwd(amount: number) {
+  return `NT$${amount.toLocaleString("en-US")}`;
+}
+
+function stockClass(quantity: number) {
+  if (quantity <= 0) return "border-border text-muted-foreground";
+  if (quantity === 1) return "border-[#6b4e1e] text-[#6b4e1e]";
+  return "border-border text-ink";
 }
 
 export default async function MarketplacePage({ params }: { params: Promise<{ lang: string }> }) {
   const { lang: raw } = await params;
   if (!isLang(raw)) notFound();
   const lang = raw;
+  const access = await getAccess();
+  const userId = access.status === "authenticated" ? access.userId : null;
+  let listings: ListingRecord[] = [];
+  let listingsUnavailable = false;
+  try {
+    listings = await listActiveListings();
+  } catch {
+    listingsUnavailable = true;
+  }
 
   const steps = [
     {
@@ -62,6 +87,48 @@ export default async function MarketplacePage({ params }: { params: Promise<{ la
             <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{tx(lang, step.body)}</p>
           </article>
         ))}
+      </section>
+      <section className="site-wrap pb-4">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <h2 className="text-3xl text-ink">{tx(lang, { en: "For sale", zh: "在售教材" })}</h2>
+          <ActionLink href={withLang(lang, "/marketplace/new")}>{tx(lang, { en: "Sell", zh: "出售" })}</ActionLink>
+        </div>
+        {listingsUnavailable ? (
+          <p className="mt-6 rounded-2xl border border-dashed border-border px-6 py-12 text-center text-sm text-muted-foreground">
+            {tx(lang, { en: "The listings are unavailable right now.", zh: "刊登目前無法載入。" })}
+          </p>
+        ) : listings.length === 0 ? (
+          <p className="mt-6 rounded-2xl border border-dashed border-border px-6 py-12 text-center text-sm text-muted-foreground">
+            {tx(lang, { en: "No books are listed yet.", zh: "目前沒有刊登的教材。" })}
+          </p>
+        ) : (
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {listings.map((listing) => {
+              const itemTitle = lang === "zh" ? listing.title_zh : listing.title_en;
+              return (
+                <article key={listing.id} className="rounded-2xl border border-border bg-cream p-4">
+                  <MarketplacePhoto
+                    src={listing.image_url}
+                    alt={itemTitle}
+                    className="block aspect-[4/3] w-full rounded-xl object-cover"
+                  />
+                  <h3 className="mt-4 text-xl text-ink">{itemTitle}</h3>
+                  <p className="mt-2 text-sm font-semibold text-ink">{formatTwd(listing.price_twd)}</p>
+                  <p className={`mt-3 inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${stockClass(listing.quantity)}`}>
+                    {tx(lang, stockLabel(listing.quantity))}
+                  </p>
+                  {userId === listing.seller_id ? (
+                    <div className="mt-4">
+                      <TextLink href={withLang(lang, `/marketplace/${listing.id}/edit`)}>
+                        {tx(lang, { en: "Edit", zh: "編輯" })}
+                      </TextLink>
+                    </div>
+                  ) : null}
+                </article>
+              );
+            })}
+          </div>
+        )}
       </section>
       <section className="site-wrap pb-16">
         <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
