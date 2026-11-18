@@ -24,6 +24,8 @@ export type ListingRecord = {
   image_url: string | null;
 };
 
+export type ListingQuote = ListingRecord & { seller_name: string };
+
 export type ListingWrite = {
   title_en: string;
   title_zh: string;
@@ -46,6 +48,14 @@ const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}
 
 export function isListingId(value: string) {
   return uuidPattern.test(value);
+}
+
+export function formatTwd(amount: number) {
+  return `NT$${amount.toLocaleString("en-US")}`;
+}
+
+export function deliveryFee(mode: "pickup" | "home") {
+  return mode === "home" ? 80 : 0;
 }
 
 export function stockLabel(quantity: number): Bi {
@@ -149,4 +159,54 @@ export function parseListingFields(
     profile,
     removePhoto: form.get("remove_photo") === "1",
   };
+}
+
+export type CheckoutItem = { listing_id: string; quantity: number };
+export type CheckoutGroup = {
+  seller_id: string;
+  delivery_mode: "pickup" | "home";
+  items: CheckoutItem[];
+};
+
+export function parseCheckout(
+  body: unknown,
+): { ok: true; groups: CheckoutGroup[]; profile: SellerProfileInput | null } | { ok: false; error: string } {
+  if (!body || typeof body !== "object") return { ok: false, error: "invalid_request" };
+  const record = body as { display_name?: unknown; phone?: unknown; groups?: unknown };
+  const displayName = typeof record.display_name === "string" ? record.display_name.trim() : "";
+  const phone = typeof record.phone === "string" ? record.phone.trim() : "";
+  if (chars(phone) > 40) return { ok: false, error: "invalid_phone" };
+  let profile: SellerProfileInput | null = null;
+  if (displayName || phone) {
+    if (chars(displayName) < 1 || chars(displayName) > 200) return { ok: false, error: "display_name_required" };
+    profile = { display_name: displayName, phone: phone || null };
+  }
+  if (!Array.isArray(record.groups) || record.groups.length === 0) return { ok: false, error: "empty_order" };
+
+  const seen = new Set<string>();
+  const groups: CheckoutGroup[] = [];
+  for (const group of record.groups) {
+    if (!group || typeof group !== "object") return { ok: false, error: "invalid_request" };
+    const row = group as { seller_id?: unknown; delivery_mode?: unknown; items?: unknown };
+    const sellerId = typeof row.seller_id === "string" ? row.seller_id : "";
+    if (!isListingId(sellerId)) return { ok: false, error: "invalid_request" };
+    if (row.delivery_mode !== "pickup" && row.delivery_mode !== "home") return { ok: false, error: "invalid_delivery" };
+    if (!Array.isArray(row.items) || row.items.length === 0) return { ok: false, error: "empty_order" };
+    const items: CheckoutItem[] = [];
+    for (const item of row.items) {
+      if (!item || typeof item !== "object") return { ok: false, error: "invalid_item" };
+      const line = item as { listing_id?: unknown; quantity?: unknown };
+      const listingId = typeof line.listing_id === "string" ? line.listing_id : "";
+      const quantity = typeof line.quantity === "number" ? line.quantity : null;
+      if (!isListingId(listingId) || quantity === null || !Number.isInteger(quantity) || quantity < 1) {
+        return { ok: false, error: "invalid_item" };
+      }
+      if (seen.has(listingId)) return { ok: false, error: "duplicate_listing" };
+      seen.add(listingId);
+      items.push({ listing_id: listingId, quantity });
+    }
+    groups.push({ seller_id: sellerId, delivery_mode: row.delivery_mode, items });
+  }
+  if (seen.size > 20) return { ok: false, error: "invalid_request" };
+  return { ok: true, groups, profile };
 }

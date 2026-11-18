@@ -1,6 +1,6 @@
 import "server-only";
 
-import type { ListingRecord, ListingWrite, SellerProfileInput } from "@/lib/marketplace-record";
+import type { CheckoutGroup, ListingQuote, ListingRecord, ListingWrite, SellerProfileInput } from "@/lib/marketplace-record";
 import { marketplacePhotoUrl, removeMarketplacePhoto, uploadMarketplacePhoto } from "@/lib/marketplace-photo";
 import { createSupabaseServer } from "@/lib/supabase-server";
 import { revalidatePath } from "next/cache";
@@ -169,6 +169,132 @@ export async function listActiveListings(): Promise<ListingRecord[]> {
     const listing = toListing(record, firstObjectName(record.listing_images));
     return listing ? [listing] : [];
   });
+}
+
+const orderErrors = [
+  "cannot_buy_own_listing",
+  "buyer_not_allowed",
+  "seller_not_allowed",
+  "invalid_delivery",
+  "empty_order",
+  "invalid_item",
+  "duplicate_listing",
+  "listing_not_available",
+  "insufficient_stock",
+  "settings_missing",
+] as const;
+
+function orderErrorCode(error: { message?: string; details?: string | null }) {
+  const blob = `${error.message ?? ""}\n${error.details ?? ""}`;
+  return orderErrors.find((code) => blob.includes(code)) ?? "save_failed";
+}
+
+async function ensureBuyer(userId: string, profile: SellerProfileInput | null): Promise<Result<true>> {
+  const existing = await getMarketplaceProfile(userId);
+  const supabase = createSupabaseServer();
+  if (!existing) {
+    if (!profile) return { ok: false, error: "display_name_required", status: 400 };
+    const { error } = await supabase.from("marketplace_profiles").insert({
+      user_id: userId,
+      display_name: profile.display_name,
+      role: "buyer",
+      phone: profile.phone,
+    });
+    if (error?.code === "23505") {
+      const again = await getMarketplaceProfile(userId);
+      if (again?.role === "seller") {
+        const { error: upgradeError } = await supabase
+          .from("marketplace_profiles")
+          .update({ role: "both" })
+          .eq("user_id", userId)
+          .eq("role", "seller");
+        if (upgradeError) return { ok: false, error: "save_failed", status: 500 };
+      }
+      return { ok: true, value: true };
+    }
+    if (error) return { ok: false, error: "save_failed", status: 500 };
+    return { ok: true, value: true };
+  }
+  if (existing.role === "buyer" || existing.role === "both") return { ok: true, value: true };
+  const { error } = await supabase.from("marketplace_profiles").update({ role: "both" }).eq("user_id", userId).eq("role", "seller");
+  if (error) return { ok: false, error: "save_failed", status: 500 };
+  return { ok: true, value: true };
+}
+
+export async function getListingsByIds(ids: string[]): Promise<ListingQuote[]> {
+  const unique = [...new Set(ids)].slice(0, 20);
+  if (!unique.length) return [];
+  const supabase = createSupabaseServer();
+  const { data, error } = await supabase
+    .from("listings")
+    .select(`${columns}, listing_images(object_name, sort_order)`)
+    .in("id", unique);
+  if (error) throw new Error("Could not load listings.");
+  const rows = (data ?? []).flatMap((row) => {
+    const record = row as Record<string, unknown>;
+    const listing = toListing(record, firstObjectName(record.listing_images));
+    return listing ? [listing] : [];
+  });
+  const sellerIds = [...new Set(rows.map((row) => row.seller_id))];
+  const { data: profiles } = await supabase.from("marketplace_profiles").select("user_id, display_name").in("user_id", sellerIds);
+  const names = new Map<string, string>();
+  for (const profile of profiles ?? []) {
+    const id = asText(profile.user_id);
+    const name = asText(profile.display_name);
+    if (id && name) names.set(id, name);
+  }
+  return rows.map((row) => ({ ...row, seller_name: names.get(row.seller_id) ?? "" }));
+}
+
+export type PlacedOrder = { order_id: string; seller_id: string };
+export type FailedOrder = { seller_id: string; error: string };
+
+export async function placeMarketplaceOrders(
+  userId: string,
+  profile: SellerProfileInput | null,
+  groups: CheckoutGroup[],
+): Promise<Result<{ placed: PlacedOrder[]; failed: FailedOrder[] }>> {
+  const buyer = await ensureBuyer(userId, profile);
+  if (!buyer.ok) return buyer;
+
+  const ids = groups.flatMap((group) => group.items.map((item) => item.listing_id));
+  const listings = await getListingsByIds(ids);
+  const byId = new Map(listings.map((listing) => [listing.id, listing]));
+
+  for (const group of groups) {
+    if (group.seller_id === userId) return { ok: false, error: "cannot_buy_own_listing", status: 400 };
+    for (const item of group.items) {
+      const listing = byId.get(item.listing_id);
+      if (!listing || listing.status !== "active") return { ok: false, error: "listing_not_available", status: 400 };
+      if (listing.seller_id !== group.seller_id) return { ok: false, error: "invalid_item", status: 400 };
+      if (listing.seller_id === userId) return { ok: false, error: "cannot_buy_own_listing", status: 400 };
+      if (item.quantity > listing.quantity) return { ok: false, error: "insufficient_stock", status: 400 };
+    }
+  }
+
+  const supabase = createSupabaseServer();
+  const placed: PlacedOrder[] = [];
+  const failed: FailedOrder[] = [];
+  for (const group of groups) {
+    const { data, error } = await supabase.rpc("create_marketplace_order", {
+      p_buyer_id: userId,
+      p_seller_id: group.seller_id,
+      p_delivery_mode: group.delivery_mode,
+      p_items: group.items,
+    });
+    const orderId = asText(data);
+    if (error || !orderId) {
+      failed.push({ seller_id: group.seller_id, error: error ? orderErrorCode(error) : "save_failed" });
+      continue;
+    }
+    placed.push({ order_id: orderId, seller_id: group.seller_id });
+  }
+
+  if (!placed.length) {
+    return { ok: false, error: failed[0]?.error ?? "save_failed", status: 400 };
+  }
+  revalidateMarketplace();
+  return { ok: true, value: { placed, failed } };
 }
 
 export async function getListing(id: string): Promise<ListingRecord | null> {

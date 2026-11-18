@@ -3,7 +3,8 @@ import { PageIntro } from "@/components/page-intro";
 import { ActionLink, TextLink } from "@/components/site-links";
 import { getAccess } from "@/lib/auth-access";
 import { isLang, tx, withLang } from "@/lib/i18n";
-import { stockLabel, type ListingRecord } from "@/lib/marketplace-record";
+import { formatTwd, stockLabel, type ListingRecord } from "@/lib/marketplace-record";
+import Link from "next/link";
 import { listActiveListings } from "@/lib/marketplace-server";
 import { pageMeta } from "@/lib/meta";
 import { notFound } from "next/navigation";
@@ -18,10 +19,6 @@ export const dynamic = "force-dynamic";
 
 export function generateMetadata({ params }: { params: Promise<{ lang: string }> }) {
   return pageMeta(params, title, description);
-}
-
-function formatTwd(amount: number) {
-  return `NT$${amount.toLocaleString("en-US")}`;
 }
 
 function stockClass(quantity: number) {
@@ -91,7 +88,10 @@ export default async function MarketplacePage({ params }: { params: Promise<{ la
       <section className="site-wrap pb-4">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <h2 className="text-3xl text-ink">{tx(lang, { en: "For sale", zh: "在售教材" })}</h2>
-          <ActionLink href={withLang(lang, "/marketplace/new")}>{tx(lang, { en: "Sell", zh: "出售" })}</ActionLink>
+          <div className="flex flex-wrap items-center gap-4">
+            <TextLink href={withLang(lang, "/marketplace/cart")}>{tx(lang, { en: "Cart", zh: "購物車" })}</TextLink>
+            <ActionLink href={withLang(lang, "/marketplace/new")}>{tx(lang, { en: "Sell", zh: "出售" })}</ActionLink>
+          </div>
         </div>
         {listingsUnavailable ? (
           <p className="mt-6 rounded-2xl border border-dashed border-border px-6 py-12 text-center text-sm text-muted-foreground">
@@ -107,16 +107,18 @@ export default async function MarketplacePage({ params }: { params: Promise<{ la
               const itemTitle = lang === "zh" ? listing.title_zh : listing.title_en;
               return (
                 <article key={listing.id} className="rounded-2xl border border-border bg-cream p-4">
-                  <MarketplacePhoto
-                    src={listing.image_url}
-                    alt={itemTitle}
-                    className="block aspect-[4/3] w-full rounded-xl object-cover"
-                  />
-                  <h3 className="mt-4 text-xl text-ink">{itemTitle}</h3>
-                  <p className="mt-2 text-sm font-semibold text-ink">{formatTwd(listing.price_twd)}</p>
-                  <p className={`mt-3 inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${stockClass(listing.quantity)}`}>
-                    {tx(lang, stockLabel(listing.quantity))}
-                  </p>
+                  <Link href={withLang(lang, `/marketplace/${listing.id}`)} className="block">
+                    <MarketplacePhoto
+                      src={listing.image_url}
+                      alt={itemTitle}
+                      className="block aspect-[4/3] w-full rounded-xl object-cover"
+                    />
+                    <h3 className="mt-4 text-xl text-ink">{itemTitle}</h3>
+                    <p className="mt-2 text-sm font-semibold text-ink">{formatTwd(listing.price_twd)}</p>
+                    <p className={`mt-3 inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${stockClass(listing.quantity)}`}>
+                      {tx(lang, stockLabel(listing.quantity))}
+                    </p>
+                  </Link>
                   {userId === listing.seller_id ? (
                     <div className="mt-4">
                       <TextLink href={withLang(lang, `/marketplace/${listing.id}/edit`)}>
