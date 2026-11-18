@@ -281,6 +281,41 @@ export function advanceButtonLabel(status: OrderStatus): Bi | null {
   return null;
 }
 
+export type AdminTransaction = MarketplaceOrder & {
+  platform_fee_twd: number;
+  awaiting_payment_at: string | null;
+};
+
+const latePaymentMs = 7 * 24 * 60 * 60 * 1000;
+
+export function isLatePayment(status: OrderStatus, awaitingAt: string | null, now = Date.now()) {
+  if (status !== "awaiting_payment" || !awaitingAt) return false;
+  const time = new Date(awaitingAt).getTime();
+  if (Number.isNaN(time)) return false;
+  return now - time > latePaymentMs;
+}
+
+export function parsePlatformFee(body: unknown): { ok: true; fee: number } | { ok: false; error: string } {
+  if (!body || typeof body !== "object") return { ok: false, error: "invalid_request" };
+  const fee = (body as { platform_fee_twd?: unknown }).platform_fee_twd;
+  if (typeof fee !== "number" || !Number.isInteger(fee) || fee < 0 || fee > 100000) {
+    return { ok: false, error: "invalid_fee" };
+  }
+  return { ok: true, fee };
+}
+
+export function parseListingModeration(
+  body: unknown,
+): { ok: true; listingId: string; status: ListingStatus } | { ok: false; error: string } {
+  if (!body || typeof body !== "object") return { ok: false, error: "invalid_request" };
+  const record = body as { listing_id?: unknown; status?: unknown };
+  const listingId = typeof record.listing_id === "string" ? record.listing_id : "";
+  if (!isListingId(listingId) || (record.status !== "active" && record.status !== "removed")) {
+    return { ok: false, error: "invalid_request" };
+  }
+  return { ok: true, listingId, status: record.status };
+}
+
 export function parseStatusChange(
   body: unknown,
 ): { ok: true; orderId: string; status: OrderStatus } | { ok: false; error: string } {

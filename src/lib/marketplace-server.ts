@@ -2,8 +2,10 @@ import "server-only";
 
 import type {
   CheckoutGroup,
+  AdminTransaction,
   ListingQuote,
   ListingRecord,
+  ListingStatus,
   ListingWrite,
   MarketplaceOrder,
   MarketplaceOrderItem,
@@ -588,4 +590,122 @@ export async function advanceMarketplaceOrder(
   if (!updated) return { ok: false, error: "save_failed", status: 500 };
   revalidateMarketplace();
   return { ok: true, value: updated };
+}
+
+function revalidateAdminMarketplace() {
+  revalidatePath("/en/admin/marketplace");
+  revalidatePath("/zh/admin/marketplace");
+}
+
+export async function listModerationListings(): Promise<ListingQuote[]> {
+  const supabase = createSupabaseServer();
+  const { data, error } = await supabase
+    .from("listings")
+    .select(`${columns}, listing_images(object_name, sort_order)`)
+    .order("created_at", { ascending: false });
+  if (error) throw new Error("Could not load listings.");
+  const rows = (data ?? []).flatMap((row) => {
+    const record = row as Record<string, unknown>;
+    const listing = toListing(record, firstObjectName(record.listing_images));
+    return listing ? [listing] : [];
+  });
+  const sellerIds = [...new Set(rows.map((row) => row.seller_id))];
+  const names = new Map<string, string>();
+  if (sellerIds.length) {
+    const { data: profiles } = await supabase.from("marketplace_profiles").select("user_id, display_name").in("user_id", sellerIds);
+    for (const profile of profiles ?? []) {
+      const id = asText(profile.user_id);
+      const name = asText(profile.display_name);
+      if (id && name) names.set(id, name);
+    }
+  }
+  return rows.map((row) => ({ ...row, seller_name: names.get(row.seller_id) ?? "" }));
+}
+
+export async function setListingSaleStatus(listingId: string, status: ListingStatus): Promise<Result<ListingQuote>> {
+  if (!isListingId(listingId) || (status !== "active" && status !== "removed")) {
+    return { ok: false, error: "invalid_request", status: 400 };
+  }
+  const supabase = createSupabaseServer();
+  const { data, error } = await supabase
+    .from("listings")
+    .update({ status, updated_at: new Date().toISOString() })
+    .eq("id", listingId)
+    .select(`${columns}, listing_images(object_name, sort_order)`)
+    .maybeSingle();
+  if (error) return { ok: false, error: "save_failed", status: 500 };
+  if (!data) return { ok: false, error: "not_found", status: 404 };
+  const record = data as Record<string, unknown>;
+  const listing = toListing(record, firstObjectName(record.listing_images));
+  if (!listing) return { ok: false, error: "save_failed", status: 500 };
+  const { data: profile } = await supabase
+    .from("marketplace_profiles")
+    .select("display_name")
+    .eq("user_id", listing.seller_id)
+    .maybeSingle();
+  revalidateMarketplace();
+  revalidateAdminMarketplace();
+  return { ok: true, value: { ...listing, seller_name: asText(profile?.display_name) ?? "" } };
+}
+
+function earliestAwaiting(value: unknown) {
+  const rows = Array.isArray(value) ? value : [];
+  const times = rows.flatMap((row) => {
+    if (!row || typeof row !== "object") return [];
+    const record = row as { status?: unknown; created_at?: unknown };
+    const status = asText(record.status);
+    const createdAt = asText(record.created_at);
+    return status === "awaiting_payment" && createdAt ? [createdAt] : [];
+  });
+  times.sort();
+  return times[0] ?? null;
+}
+
+function toAdminTransaction(row: Record<string, unknown>): AdminTransaction | null {
+  const order = toOrder(row);
+  const fee = asInt(row.platform_fee_twd);
+  if (!order || fee === null) return null;
+  return { ...order, platform_fee_twd: fee, awaiting_payment_at: earliestAwaiting(row.order_status_events) };
+}
+
+export async function listAdminTransactions(): Promise<AdminTransaction[]> {
+  const supabase = createSupabaseServer();
+  const { data, error } = await supabase
+    .from("orders")
+    .select(`${orderColumns}, platform_fee_twd, order_status_events(status, created_at)`)
+    .order("created_at", { ascending: false });
+  if (error) throw new Error("Could not load orders.");
+  return (data ?? []).flatMap((row) => {
+    const order = toAdminTransaction(row as Record<string, unknown>);
+    return order ? [order] : [];
+  });
+}
+
+export async function getPlatformFee(): Promise<number | null> {
+  const supabase = createSupabaseServer();
+  const { data, error } = await supabase.from("marketplace_settings").select("platform_fee_twd").eq("id", 1).maybeSingle();
+  if (error || !data) return null;
+  return asInt(data.platform_fee_twd);
+}
+
+export async function setPlatformFee(userId: string, fee: number): Promise<Result<number>> {
+  if (!isListingId(userId) || !Number.isInteger(fee) || fee < 0 || fee > 100000) {
+    return { ok: false, error: "invalid_fee", status: 400 };
+  }
+  const supabase = createSupabaseServer();
+  const { data: profile, error: profileError } = await supabase.from("profiles").select("role").eq("id", userId).maybeSingle();
+  if (profileError) return { ok: false, error: "save_failed", status: 500 };
+  if (profile?.role !== "super_admin") return { ok: false, error: "forbidden", status: 403 };
+
+  const { data, error } = await supabase
+    .from("marketplace_settings")
+    .update({ platform_fee_twd: fee })
+    .eq("id", 1)
+    .select("platform_fee_twd")
+    .maybeSingle();
+  if (error) return { ok: false, error: "save_failed", status: 500 };
+  const saved = asInt(data?.platform_fee_twd);
+  if (saved === null) return { ok: false, error: "settings_missing", status: 500 };
+  revalidateAdminMarketplace();
+  return { ok: true, value: saved };
 }

@@ -10,6 +10,7 @@ export function AdminNav({ lang }: { lang: Lang }) {
     { href: withLang(lang, "/admin/news"), label: { en: "Announcements", zh: "公告" } },
     { href: withLang(lang, "/admin/faculty"), label: { en: "Faculty", zh: "師資" } },
     { href: withLang(lang, "/admin/alumni"), label: { en: "Alumni", zh: "校友" } },
+    { href: withLang(lang, "/admin/marketplace"), label: { en: "Marketplace", zh: "教材市集" } },
   ];
 
   return (
