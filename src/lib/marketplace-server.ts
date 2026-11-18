@@ -1,6 +1,16 @@
 import "server-only";
 
-import type { CheckoutGroup, ListingQuote, ListingRecord, ListingWrite, SellerProfileInput } from "@/lib/marketplace-record";
+import type {
+  CheckoutGroup,
+  ListingQuote,
+  ListingRecord,
+  ListingWrite,
+  MarketplaceOrder,
+  MarketplaceOrderItem,
+  OrderStatus,
+  SellerProfileInput,
+} from "@/lib/marketplace-record";
+import { isListingId, isOrderStatus, nextOrderStatus } from "@/lib/marketplace-record";
 import { marketplacePhotoUrl, removeMarketplacePhoto, uploadMarketplacePhoto } from "@/lib/marketplace-photo";
 import { createSupabaseServer } from "@/lib/supabase-server";
 import { revalidatePath } from "next/cache";
@@ -21,6 +31,8 @@ type Result<T> = { ok: true; value: T } | { ok: false; error: string; status: nu
 function revalidateMarketplace() {
   revalidatePath("/en/marketplace");
   revalidatePath("/zh/marketplace");
+  revalidatePath("/en/marketplace/me");
+  revalidatePath("/zh/marketplace/me");
 }
 
 function asRole(value: unknown): MarketplaceRole | null {
@@ -182,6 +194,10 @@ const orderErrors = [
   "listing_not_available",
   "insufficient_stock",
   "settings_missing",
+  "invalid_status_step",
+  "not_your_order",
+  "order_not_found",
+  "order_snapshot_locked",
 ] as const;
 
 function orderErrorCode(error: { message?: string; details?: string | null }) {
@@ -287,6 +303,8 @@ export async function placeMarketplaceOrders(
       failed.push({ seller_id: group.seller_id, error: error ? orderErrorCode(error) : "save_failed" });
       continue;
     }
+    const buyer = await getMarketplaceProfile(userId);
+    await recordStatusEvent(orderId, "placed", userId, buyer?.display_name ?? profile?.display_name ?? "");
     placed.push({ order_id: orderId, seller_id: group.seller_id });
   }
 
@@ -434,4 +452,140 @@ export async function updateListing(
   if (!listing) return { ok: false, error: "save_failed", status: 500 };
   revalidateMarketplace();
   return { ok: true, value: listing };
+}
+
+const orderColumns =
+  "id, buyer_id, seller_id, buyer_name, seller_name, items_subtotal_twd, delivery_fee_twd, total_twd, status, created_at, updated_at, order_items(title_en, title_zh, quantity, unit_price_twd)";
+
+function toOrderItem(value: unknown): MarketplaceOrderItem | null {
+  if (!value || typeof value !== "object") return null;
+  const row = value as Record<string, unknown>;
+  const titleEn = asText(row.title_en);
+  const titleZh = asText(row.title_zh);
+  const quantity = asInt(row.quantity);
+  const price = asInt(row.unit_price_twd);
+  if (!titleEn || !titleZh || quantity === null || quantity < 1 || price === null) return null;
+  return { title_en: titleEn, title_zh: titleZh, quantity, unit_price_twd: price };
+}
+
+function toOrder(row: Record<string, unknown>): MarketplaceOrder | null {
+  const id = asText(row.id);
+  const buyerName = asText(row.buyer_name);
+  const sellerName = asText(row.seller_name);
+  const subtotal = asInt(row.items_subtotal_twd);
+  const deliveryFee = asInt(row.delivery_fee_twd);
+  const total = asInt(row.total_twd);
+  const status = asText(row.status);
+  const createdAt = asText(row.created_at);
+  const updatedAt = asText(row.updated_at);
+  const items = Array.isArray(row.order_items) ? row.order_items.flatMap((item) => {
+    const parsed = toOrderItem(item);
+    return parsed ? [parsed] : [];
+  }) : [];
+  if (!id || !buyerName || !sellerName || subtotal === null || deliveryFee === null || total === null || !isOrderStatus(status) || !createdAt || !updatedAt) {
+    return null;
+  }
+  return {
+    id,
+    buyer_id: row.buyer_id == null ? null : asText(row.buyer_id),
+    seller_id: row.seller_id == null ? null : asText(row.seller_id),
+    buyer_name: buyerName,
+    seller_name: sellerName,
+    items_subtotal_twd: subtotal,
+    delivery_fee_twd: deliveryFee,
+    total_twd: total,
+    status,
+    created_at: createdAt,
+    updated_at: updatedAt,
+    items,
+  };
+}
+
+export async function listMyOrders(userId: string): Promise<{ buyerOrders: MarketplaceOrder[]; sellerOrders: MarketplaceOrder[] }> {
+  if (!isListingId(userId)) return { buyerOrders: [], sellerOrders: [] };
+  const supabase = createSupabaseServer();
+  const { data, error } = await supabase
+    .from("orders")
+    .select(orderColumns)
+    .or(`buyer_id.eq.${userId},seller_id.eq.${userId}`)
+    .order("created_at", { ascending: false });
+  if (error) throw new Error("Could not load orders.");
+  const orders = (data ?? []).flatMap((row) => {
+    const order = toOrder(row as Record<string, unknown>);
+    return order ? [order] : [];
+  });
+  return {
+    buyerOrders: orders.filter((order) => order.buyer_id === userId),
+    sellerOrders: orders.filter((order) => order.seller_id === userId),
+  };
+}
+
+async function loadOrder(orderId: string): Promise<MarketplaceOrder | null> {
+  const supabase = createSupabaseServer();
+  const { data, error } = await supabase.from("orders").select(orderColumns).eq("id", orderId).maybeSingle();
+  if (error || !data) return null;
+  return toOrder(data as Record<string, unknown>);
+}
+
+async function recordStatusEvent(orderId: string, status: OrderStatus, actorId: string, actorLabel: string) {
+  const supabase = createSupabaseServer();
+  const { data, error } = await supabase
+    .from("order_status_events")
+    .select("id, actor_id")
+    .eq("order_id", orderId)
+    .eq("status", status)
+    .order("created_at", { ascending: false })
+    .limit(1);
+  if (error) return false;
+  const latest = data?.[0];
+  if (!latest) {
+    const { error: insertError } = await supabase.from("order_status_events").insert({
+      order_id: orderId,
+      status,
+      actor_id: actorId,
+      actor_label: actorLabel || null,
+    });
+    return !insertError;
+  }
+  if (latest.actor_id) return true;
+  const { error: updateError } = await supabase
+    .from("order_status_events")
+    .update({ actor_id: actorId, actor_label: actorLabel || null })
+    .eq("id", latest.id);
+  return !updateError;
+}
+
+export async function advanceMarketplaceOrder(
+  userId: string,
+  orderId: string,
+  nextStatus: OrderStatus,
+): Promise<Result<MarketplaceOrder>> {
+  if (!isListingId(userId) || !isListingId(orderId)) return { ok: false, error: "invalid_request", status: 400 };
+  const current = await loadOrder(orderId);
+  if (!current) return { ok: false, error: "order_not_found", status: 404 };
+  if (nextOrderStatus(current.status) !== nextStatus) return { ok: false, error: "invalid_status_step", status: 400 };
+  if (current.status === "placed") {
+    if (current.buyer_id !== userId) return { ok: false, error: "not_your_order", status: 403 };
+  } else if (current.seller_id !== userId) {
+    return { ok: false, error: "not_your_order", status: 403 };
+  }
+
+  const profile = await getMarketplaceProfile(userId);
+  const supabase = createSupabaseServer();
+  const { data, error } = await supabase
+    .from("orders")
+    .update({ status: nextStatus })
+    .eq("id", orderId)
+    .eq("status", current.status)
+    .select("id");
+  if (error) return { ok: false, error: orderErrorCode(error), status: 400 };
+  if (!data?.length) return { ok: false, error: "invalid_status_step", status: 400 };
+
+  const recorded = await recordStatusEvent(orderId, nextStatus, userId, profile?.display_name ?? "");
+  if (!recorded) return { ok: false, error: "save_failed", status: 500 };
+
+  const updated = await loadOrder(orderId);
+  if (!updated) return { ok: false, error: "save_failed", status: 500 };
+  revalidateMarketplace();
+  return { ok: true, value: updated };
 }

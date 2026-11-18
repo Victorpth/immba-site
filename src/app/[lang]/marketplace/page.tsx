@@ -90,6 +90,7 @@ export default async function MarketplacePage({ params }: { params: Promise<{ la
           <h2 className="text-3xl text-ink">{tx(lang, { en: "For sale", zh: "在售教材" })}</h2>
           <div className="flex flex-wrap items-center gap-4">
             <TextLink href={withLang(lang, "/marketplace/cart")}>{tx(lang, { en: "Cart", zh: "購物車" })}</TextLink>
+            <TextLink href={withLang(lang, "/marketplace/me")}>{tx(lang, { en: "My orders", zh: "我的訂單" })}</TextLink>
             <ActionLink href={withLang(lang, "/marketplace/new")}>{tx(lang, { en: "Sell", zh: "出售" })}</ActionLink>
           </div>
         </div>

@@ -210,3 +210,83 @@ export function parseCheckout(
   if (seen.size > 20) return { ok: false, error: "invalid_request" };
   return { ok: true, groups, profile };
 }
+
+export const orderStatuses = [
+  "placed",
+  "awaiting_payment",
+  "payment_confirmed",
+  "ready_to_ship",
+  "shipped",
+  "completed",
+] as const;
+
+export type OrderStatus = (typeof orderStatuses)[number];
+
+export type MarketplaceOrderItem = {
+  title_en: string;
+  title_zh: string;
+  quantity: number;
+  unit_price_twd: number;
+};
+
+export type MarketplaceOrder = {
+  id: string;
+  buyer_id: string | null;
+  seller_id: string | null;
+  buyer_name: string;
+  seller_name: string;
+  items_subtotal_twd: number;
+  delivery_fee_twd: number;
+  total_twd: number;
+  status: OrderStatus;
+  created_at: string;
+  updated_at: string;
+  items: MarketplaceOrderItem[];
+};
+
+export function isOrderStatus(value: unknown): value is OrderStatus {
+  return typeof value === "string" && (orderStatuses as readonly string[]).includes(value);
+}
+
+export function nextOrderStatus(status: OrderStatus): OrderStatus | null {
+  const index = orderStatuses.indexOf(status);
+  return orderStatuses[index + 1] ?? null;
+}
+
+export function orderStatusLabel(status: OrderStatus): Bi {
+  const labels: Record<OrderStatus, Bi> = {
+    placed: { en: "Order placed", zh: "已下單" },
+    awaiting_payment: { en: "Waiting for payment confirmation", zh: "待確認付款" },
+    payment_confirmed: { en: "Payment confirmed", zh: "已確認付款" },
+    ready_to_ship: { en: "Ready to ship", zh: "待出貨" },
+    shipped: { en: "Shipped", zh: "已出貨" },
+    completed: { en: "Completed", zh: "已完成" },
+  };
+  return labels[status];
+}
+
+export function paymentStatusLabel(status: OrderStatus): Bi {
+  if (status === "placed") return { en: "Unpaid", zh: "未付款" };
+  if (status === "awaiting_payment") return { en: "Waiting for confirmation", zh: "待確認付款" };
+  return { en: "Paid", zh: "已付款" };
+}
+
+export function advanceButtonLabel(status: OrderStatus): Bi | null {
+  const next = nextOrderStatus(status);
+  if (next === "awaiting_payment") return { en: "I've paid", zh: "我已付款" };
+  if (next === "payment_confirmed") return { en: "Payment confirmed", zh: "已確認付款" };
+  if (next === "ready_to_ship") return { en: "Ready to ship", zh: "待出貨" };
+  if (next === "shipped") return { en: "Shipped", zh: "已出貨" };
+  if (next === "completed") return { en: "Completed", zh: "已完成" };
+  return null;
+}
+
+export function parseStatusChange(
+  body: unknown,
+): { ok: true; orderId: string; status: OrderStatus } | { ok: false; error: string } {
+  if (!body || typeof body !== "object") return { ok: false, error: "invalid_request" };
+  const record = body as { order_id?: unknown; status?: unknown };
+  const orderId = typeof record.order_id === "string" ? record.order_id : "";
+  if (!isListingId(orderId) || !isOrderStatus(record.status)) return { ok: false, error: "invalid_request" };
+  return { ok: true, orderId, status: record.status };
+}
